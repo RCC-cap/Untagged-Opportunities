@@ -1,0 +1,46 @@
+# Partner list with priority weights for recommendation engine
+# Higher weight = stronger priority in scoring
+
+partners:
+  hyperscalers:
+    - name: Microsoft
+      weight: 1.3
+      tier: 1
+    - name: SAP
+      weight: 1.2
+      tier: 1
+    - name: AWS
+      weight: 1.2
+      tier: 1
+    - name: Oracle
+      weight: 1.1
+      tier: 1
+    - name: Google
+      weight: 1.1
+      tier: 1
+
+  strategic:
+    - name: ServiceNow
+      weight: 1.0
+      tier: 2
+    - name: Salesforce
+      weight: 1.0
+      tier: 2
+
+  # Add more partners as needed
+  other:
+    - name: VMware
+      weight: 0.9
+      tier: 3
+    - name: Palo Alto
+      weight: 0.9
+      tier: 3
+    - name: CrowdStrike
+      weight: 0.9
+      tier: 3
+
+# Values that identify untagged opportunities
+untagged_values:
+  - "No Vendor/Partner"
+  - "-"
+  - ""

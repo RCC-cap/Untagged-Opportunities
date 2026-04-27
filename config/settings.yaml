@@ -1,0 +1,33 @@
+# Application settings
+
+schedule:
+  cron: "0 10 * * *"          # Daily at 10:00 AM
+  timezone: "Europe/Rome"
+
+processing:
+  batch_size: 50               # Rows per AI call
+  max_batches_per_run: 200     # Safety limit per daily run
+  confidence_threshold: 60     # Minimum confidence to recommend (0-100)
+  auto_approve_threshold: 90   # Auto-approve if confidence >= this
+
+azure_openai:
+  model_batch: "gpt-4o-mini"   # For batch processing
+  model_complex: "gpt-4o"      # For low-confidence / complex cases
+  temperature: 0.2
+  max_tokens: 500
+
+sharepoint:
+  sheet_name: "Sheet1"         # Sheet containing opportunity data
+  partner_column: "Partner"    # Column name for partner tag
+  skip_sheets:                 # Sheets to ignore (VBA, macros)
+    - "Macros"
+    - "Config"
+
+approval:
+  email_subject: "THOR — Partner Tag Recommendation for Review"
+  response_timeout_days: 7     # Days before escalation
+  reminder_after_days: 3       # Send reminder after N days
+
+audit:
+  format: "jsonl"              # One JSON object per line
+  retention_days: 365

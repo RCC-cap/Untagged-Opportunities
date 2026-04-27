@@ -1,0 +1,87 @@
+{
+  "version": "1.0",
+  "description": "Keyword-to-partner taxonomy mapping for opportunity tagging",
+  "rules": {
+    "Microsoft": {
+      "keywords": [
+        "azure", "microsoft", "ms ", "m365", "office 365", "dynamics",
+        "power platform", "power bi", "sharepoint", "teams", "copilot",
+        ".net", "sql server", "windows server", "active directory",
+        "entra", "intune", "defender", "sentinel", "fabric"
+      ],
+      "technologies": [
+        "Azure", "Microsoft 365", "Dynamics 365", "Power Platform"
+      ],
+      "offers": [
+        "Azure Migration", "Modern Workplace", "Cloud Infrastructure"
+      ]
+    },
+    "SAP": {
+      "keywords": [
+        "sap", "s/4hana", "s4hana", "hana", "abap", "fiori",
+        "successfactors", "ariba", "concur", "btp", "business technology platform",
+        "ecc", "erp central", "sap cloud"
+      ],
+      "technologies": [
+        "SAP S/4HANA", "SAP BTP", "SAP ECC", "SAP SuccessFactors"
+      ],
+      "offers": [
+        "SAP Migration", "SAP Implementation", "S/4HANA Transformation"
+      ]
+    },
+    "AWS": {
+      "keywords": [
+        "aws", "amazon web services", "ec2", "s3", "lambda", "cloudformation",
+        "redshift", "sagemaker", "eks", "ecs", "rds", "aurora",
+        "dynamodb", "cloudfront", "kinesis"
+      ],
+      "technologies": [
+        "AWS", "Amazon Web Services"
+      ],
+      "offers": [
+        "AWS Migration", "Cloud Native", "AWS Managed Services"
+      ]
+    },
+    "Oracle": {
+      "keywords": [
+        "oracle", "oci", "oracle cloud", "exadata", "weblogic",
+        "peoplesoft", "jd edwards", "oracle db", "oracle database",
+        "oracle fusion", "oracle erp", "netsuite"
+      ],
+      "technologies": [
+        "Oracle Cloud", "Oracle Database", "Oracle ERP"
+      ],
+      "offers": [
+        "Oracle Migration", "Oracle Cloud Infrastructure"
+      ]
+    },
+    "Google": {
+      "keywords": [
+        "google", "gcp", "google cloud", "bigquery", "anthos",
+        "kubernetes engine", "gke", "google workspace", "chrome enterprise",
+        "looker", "vertex ai", "cloud run"
+      ],
+      "technologies": [
+        "Google Cloud Platform", "Google Workspace"
+      ],
+      "offers": [
+        "GCP Migration", "Data Analytics", "Google Workspace"
+      ]
+    },
+    "ServiceNow": {
+      "keywords": [
+        "servicenow", "snow", "itsm", "itom", "service management"
+      ],
+      "technologies": ["ServiceNow"],
+      "offers": ["ITSM Implementation", "ServiceNow Platform"]
+    },
+    "Salesforce": {
+      "keywords": [
+        "salesforce", "sfdc", "crm", "sales cloud", "service cloud",
+        "marketing cloud", "mulesoft", "tableau"
+      ],
+      "technologies": ["Salesforce", "MuleSoft", "Tableau"],
+      "offers": ["CRM Implementation", "Salesforce Platform"]
+    }
+  }
+}
