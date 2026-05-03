@@ -5,16 +5,20 @@ schedule:
   timezone: "Europe/Rome"
 
 processing:
-  batch_size: 50               # Rows per AI call
-  max_batches_per_run: 200     # Safety limit per daily run
-  confidence_threshold: 60     # Minimum confidence to recommend (0-100)
-  auto_approve_threshold: 90   # Auto-approve if confidence >= this
+  batch_size: 200              # Rows per AI call (GPT 5.4 handles large context)
+  max_batches_per_run: 500     # Safety limit per daily run (500 × 200 = 100K rows)
+  always_send_email: true      # Every untagged opp is sent to Sales Lead regardless of confidence
+  auto_approve_threshold: 90   # Auto-approve if confidence >= this (should-have)
+  skip_already_processed: true # Skip OppIDs already in audit log
 
 azure_openai:
-  model_batch: "gpt-4o-mini"   # For batch processing
-  model_complex: "gpt-4o"      # For low-confidence / complex cases
+  model: "gpt-5.4"             # Single model for all processing
   temperature: 0.2
-  max_tokens: 500
+  max_tokens: 800
+
+scoring:
+  account_history_weight: 1.5  # Strong boost when account has prior tagged deals
+  min_deals_for_boost: 2       # Minimum prior deals to trigger account history signal
 
 sharepoint:
   sheet_name: "Sheet1"         # Sheet containing opportunity data
@@ -31,3 +35,7 @@ approval:
 audit:
   format: "jsonl"              # One JSON object per line
   retention_days: 365
+
+webhook:
+  base_url: "https://thor.example.com/api"  # Replace with actual deployed URL
+  token_ttl_hours: 168         # Token valid for 7 days
