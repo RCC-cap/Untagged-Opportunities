@@ -21,7 +21,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/api/run",
+        "url": "https://thor-api-rcc.azurewebsites.net/api/run",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "{\"use_llm\": true, \"dry_run\": false}",
