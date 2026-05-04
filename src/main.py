@@ -172,6 +172,10 @@ def run_pipeline(
                     llm_fallbacks += 1
 
             # ── Map to email model ──────────────────────────────────────
+            euro_bkngs_raw = row_dict.get("Euro Bkngs", 0)
+            euro_bkngs = float(euro_bkngs_raw) if euro_bkngs_raw else 0.0
+            stage = str(row_dict.get("Stage", ""))
+
             opp_rec = OpportunityRecommendation(
                 opp_id=opp_id,
                 opp_name=opp_name,
@@ -184,6 +188,8 @@ def run_pipeline(
                     )
                     for c in rec.candidates
                 ],
+                euro_bkngs=euro_bkngs,
+                stage=stage,
             )
 
             # Group by Sales Lead email

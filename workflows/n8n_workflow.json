@@ -20,25 +20,32 @@
     },
     {
       "parameters": {
-        "command": "cd /app && python -m src.main --json-output 2>&1",
-        "timeout": 3600
+        "method": "POST",
+        "url": "={{ $env.THOR_API_BASE_URL || 'http://localhost:8000' }}/api/run",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"use_llm\": true, \"dry_run\": false}",
+        "options": {
+          "timeout": 3600000,
+          "fullResponse": true
+        }
       },
       "id": "2e973851-f3b7-472f-8e4b-ccdc226823a2",
       "name": "Run Pipeline",
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [-400, -16],
       "onError": "continueRegularOutput",
-      "notes": "Executes the Python pipeline. Outputs JSON summary to stdout. Timeout: 1 hour."
+      "notes": "POSTs to the THOR FastAPI /api/run endpoint. Set THOR_API_BASE_URL env var to your deployed API URL. Timeout: 1 hour."
     },
     {
       "parameters": {
         "conditions": {
           "number": [
             {
-              "value1": "={{ $json.exitCode }}",
+              "value1": "={{ $json.statusCode }}",
               "operation": "equal",
-              "value2": 0
+              "value2": 200
             }
           ]
         },
@@ -52,14 +59,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const stdout = $input.first().json.stdout;\ntry {\n  const result = JSON.parse(stdout.trim().split('\\n').pop());\n  return [{ json: result }];\n} catch (e) {\n  return [{ json: { error: 'Failed to parse pipeline output', raw: stdout } }];\n}"
+        "jsCode": "const body = $input.first().json.body;\ntry {\n  const result = typeof body === 'string' ? JSON.parse(body) : body;\n  return [{ json: result }];\n} catch (e) {\n  return [{ json: { error: 'Failed to parse API response', raw: JSON.stringify(body) } }];\n}"
       },
       "id": "39951df0-41dd-44fe-a329-da2b456b6489",
       "name": "Parse JSON Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [-80, -80],
-      "notes": "Extracts the JSON summary from the last line of stdout."
+      "notes": "Extracts the pipeline result from the HTTP response body."
     },
     {
       "parameters": {
@@ -105,7 +112,7 @@
       "parameters": {
         "toRecipients": "riccardo-carlo.conte@capgemini.com",
         "subject": "=⚠️ THOR Pipeline FAILED — {{ $now.format('yyyy-MM-dd') }}",
-        "bodyContent": "=<h2 style='color:#d83b01'>Pipeline Failure</h2><p>The THOR partner tagging pipeline failed on {{ $now.format('yyyy-MM-dd HH:mm') }}.</p><h3>Error Output</h3><pre style='background:#f5f5f5;padding:12px;border-radius:4px;overflow-x:auto'>{{ $json.stderr || $json.stdout || 'No output captured' }}</pre><p>Exit code: {{ $json.exitCode }}</p><p style='color:#666'>Check the application logs for details.</p>",
+        "bodyContent": "=<h2 style='color:#d83b01'>Pipeline Failure</h2><p>The THOR partner tagging pipeline failed on {{ $now.format('yyyy-MM-dd HH:mm') }}.</p><h3>Error Output</h3><pre style='background:#f5f5f5;padding:12px;border-radius:4px;overflow-x:auto'>{{ $json.body?.error || $json.body || 'No output captured' }}</pre><p>HTTP status: {{ $json.statusCode }}</p><p style='color:#666'>Check the application logs for details.</p>",
         "additionalFields": {}
       },
       "id": "6e67ca71-87c1-4843-aab8-a6182e503855",

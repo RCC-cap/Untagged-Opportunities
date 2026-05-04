@@ -1,18 +1,21 @@
 """FastAPI webhook server for THOR partner tagging responses.
 
 Endpoints:
-    GET /api/select?opp_id=X&partner=Y&token=Z  — Partner selected
-    GET /api/reject?opp_id=X&token=Z             — All rejected
-    GET /health                                  — Health check
+    GET  /api/select?opp_id=X&partner=Y&token=Z  — Partner selected
+    GET  /api/reject?opp_id=X&token=Z             — All rejected
+    POST /api/run                                 — Trigger pipeline run
+    GET  /health                                  — Health check
 """
 
 from __future__ import annotations
 
 import html
 import logging
+import traceback
 
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import BaseModel
 
 from src.approval.webhook_handler import handle_reject, handle_select
 from src.store.state_manager import is_responded, get_response
@@ -31,6 +34,40 @@ app = FastAPI(
 async def health():
     """Health check endpoint for Azure monitoring."""
     return {"status": "healthy", "service": "thor-webhooks"}
+
+
+class RunRequest(BaseModel):
+    """Optional parameters for triggering a pipeline run."""
+    file: str | None = None
+    dry_run: bool = False
+    use_llm: bool = True
+
+
+@app.post("/api/run")
+async def run_pipeline_endpoint(body: RunRequest | None = None):
+    """Trigger a full pipeline run and return JSON summary.
+
+    Called by n8n HTTP Request node instead of Execute Command.
+    """
+    from pathlib import Path
+    from src.main import run_pipeline
+
+    params = body or RunRequest()
+    file_path = Path(params.file) if params.file else None
+
+    try:
+        result = run_pipeline(
+            file_path=file_path,
+            dry_run=params.dry_run,
+            use_llm=params.use_llm,
+        )
+        return JSONResponse(content=result, status_code=200)
+    except Exception:
+        logger.exception("Pipeline run failed")
+        return JSONResponse(
+            content={"error": traceback.format_exc()},
+            status_code=500,
+        )
 
 
 @app.get("/api/select", response_class=HTMLResponse)
