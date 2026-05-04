@@ -21,7 +21,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.THOR_API_BASE_URL || 'http://localhost:8000' }}/api/run",
+        "url": "http://localhost:8000/api/run",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "{\"use_llm\": true, \"dry_run\": false}",
