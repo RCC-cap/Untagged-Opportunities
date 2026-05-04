@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import html
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from src.approval.token_utils import verify_token
 from src.audit.audit_logger import append_audit_entry
-from src.update.dataset_updater import update_sharepoint_file
+from src.store.state_manager import record_response
 
 
 @dataclass
@@ -42,17 +43,21 @@ def handle_select(params: dict) -> tuple[str, int]:
     if not verify_token(opp_id, partner, token):
         return _error_page("Invalid or expired link. Please contact your administrator."), 403
 
-    # Log to audit
+    # Persist to Cosmos DB
+    record_response(
+        opp_id=opp_id,
+        decision="selected",
+        selected_partner=partner,
+    )
+
+    # Local audit backup
     append_audit_entry(
         opportunity_id=opp_id,
         recommended_partner=partner,
         decision="selected",
         rationale=f"Sales Lead selected {partner} from email",
-        confidence=0,  # Not relevant for the response
+        confidence=0,
     )
-
-    # TODO: Write tag back to dataset
-    # update_partner_in_source(opp_id, partner)
 
     return _success_page(opp_id, partner), 200
 
@@ -76,7 +81,14 @@ def handle_reject(params: dict) -> tuple[str, int]:
     if not verify_token(opp_id, "", token):
         return _error_page("Invalid or expired link. Please contact your administrator."), 403
 
-    # Log to audit
+    # Persist to Cosmos DB
+    record_response(
+        opp_id=opp_id,
+        decision="rejected",
+        selected_partner=None,
+    )
+
+    # Local audit backup
     append_audit_entry(
         opportunity_id=opp_id,
         recommended_partner="",
@@ -90,13 +102,15 @@ def handle_reject(params: dict) -> tuple[str, int]:
 
 def _success_page(opp_id: str, partner: str) -> str:
     """Render confirmation page after partner selection."""
+    safe_opp = html.escape(opp_id)
+    safe_partner = html.escape(partner)
     return f"""\
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Tag Applied</title></head>
 <body style="font-family: Segoe UI, Arial, sans-serif; max-width: 500px; margin: 60px auto; text-align: center;">
   <h2 style="color: #107c10;">✅ Tag Applied Successfully</h2>
-  <p>Partner tag <strong>{partner}</strong> has been applied to opportunity <strong>{opp_id}</strong>.</p>
+  <p>Partner tag <strong>{safe_partner}</strong> has been applied to opportunity <strong>{safe_opp}</strong>.</p>
   <p style="color: #666; margin-top: 24px;">You may close this window.</p>
 </body>
 </html>"""
@@ -104,13 +118,14 @@ def _success_page(opp_id: str, partner: str) -> str:
 
 def _reject_page(opp_id: str) -> str:
     """Render confirmation page after reject-all."""
+    safe_opp = html.escape(opp_id)
     return f"""\
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Rejected</title></head>
 <body style="font-family: Segoe UI, Arial, sans-serif; max-width: 500px; margin: 60px auto; text-align: center;">
   <h2 style="color: #d83b01;">❌ All Recommendations Rejected</h2>
-  <p>No partner has been applied to opportunity <strong>{opp_id}</strong>.</p>
+  <p>No partner has been applied to opportunity <strong>{safe_opp}</strong>.</p>
   <p>This opportunity has been flagged for manual review by Sales Operations.</p>
   <p style="color: #666; margin-top: 24px;">You may close this window.</p>
 </body>
@@ -119,12 +134,13 @@ def _reject_page(opp_id: str) -> str:
 
 def _error_page(message: str) -> str:
     """Render error page."""
+    safe_msg = html.escape(message)
     return f"""\
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Error</title></head>
 <body style="font-family: Segoe UI, Arial, sans-serif; max-width: 500px; margin: 60px auto; text-align: center;">
   <h2 style="color: #d83b01;">⚠️ Error</h2>
-  <p>{message}</p>
+  <p>{safe_msg}</p>
 </body>
 </html>"""

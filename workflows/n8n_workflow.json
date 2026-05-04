@@ -1,8 +1,210 @@
-{
+﻿{
   "name": "THOR Partner Retagging — Phase 1",
-  "nodes": [],
-  "connections": {},
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "id": "06901ee8-fafb-4a0b-af08-6d2312d45ecc",
+      "name": "Daily 10:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-576, -16],
+      "notes": "Runs daily at 10:00 AM Europe/Rome. Triggers the THOR partner tagging pipeline."
+    },
+    {
+      "parameters": {
+        "command": "cd /app && python -m src.main --json-output 2>&1",
+        "timeout": 3600
+      },
+      "id": "2e973851-f3b7-472f-8e4b-ccdc226823a2",
+      "name": "Run Pipeline",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [-400, -16],
+      "onError": "continueRegularOutput",
+      "notes": "Executes the Python pipeline. Outputs JSON summary to stdout. Timeout: 1 hour."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.exitCode }}",
+              "operation": "equal",
+              "value2": 0
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "856c6ddc-554d-4501-85bc-fa8ccdb1f062",
+      "name": "Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-240, -16]
+    },
+    {
+      "parameters": {
+        "jsCode": "const stdout = $input.first().json.stdout;\ntry {\n  const result = JSON.parse(stdout.trim().split('\\n').pop());\n  return [{ json: result }];\n} catch (e) {\n  return [{ json: { error: 'Failed to parse pipeline output', raw: stdout } }];\n}"
+      },
+      "id": "39951df0-41dd-44fe-a329-da2b456b6489",
+      "name": "Parse JSON Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-80, -80],
+      "notes": "Extracts the JSON summary from the last line of stdout."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://default76a2ae5a9f004f6b95ed5d33d77c4d.61.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5f62b45d4f03437dbf536a9250941547/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=V0HHXpj6ofQVNjrniLZ76YPP8U7ARdiM1XrjcUIt1Pk",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      "name": "POST to Teams Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [128, -180],
+      "notes": "POSTs pipeline results JSON to Power Automate webhook (Teams integration)."
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "toRecipients": "riccardo-carlo.conte@capgemini.com",
+        "subject": "=THOR Daily Run — {{ $json.processed }} opportunities processed",
+        "message": "=<h2>THOR Daily Summary</h2><table style='border-collapse:collapse;width:100%'><tr style='background:#f3f3f3'><td style='padding:8px;font-weight:bold'>Processed</td><td style='padding:8px'>{{ $json.processed }}</td></tr><tr><td style='padding:8px;font-weight:bold'>Skipped (already done)</td><td style='padding:8px'>{{ $json.skipped }}</td></tr><tr style='background:#f3f3f3'><td style='padding:8px;font-weight:bold'>Sales Leads notified</td><td style='padding:8px'>{{ $json.leads_notified }}</td></tr><tr><td style='padding:8px;font-weight:bold'>Emails sent</td><td style='padding:8px'>{{ $json.emails_sent }}</td></tr><tr style='background:#f3f3f3'><td style='padding:8px;font-weight:bold'>LLM calls</td><td style='padding:8px'>{{ $json.llm_calls || 'N/A' }}</td></tr><tr><td style='padding:8px;font-weight:bold'>Fallbacks</td><td style='padding:8px'>{{ $json.llm_fallbacks || 0 }}</td></tr></table><p style='color:#666;margin-top:16px'>Run completed at {{ $now.toISO() }}</p>",
+        "options": {}
+      },
+      "id": "8113f2d3-9a12-4887-ab78-c9274afcbbeb",
+      "name": "Send Summary to Sales Ops",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [128, -80],
+      "webhookId": "43448b35-14e2-4bef-ba6d-cf2f08e0d888",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "NP3s0P2eXvxglbfb",
+          "name": "Microsoft Outlook account"
+        }
+      },
+      "notes": "Sends daily run summary to Sales Ops via Outlook (Teams webhook auth)."
+    },
+    {
+      "parameters": {
+        "toRecipients": "riccardo-carlo.conte@capgemini.com",
+        "subject": "=⚠️ THOR Pipeline FAILED — {{ $now.format('yyyy-MM-dd') }}",
+        "bodyContent": "=<h2 style='color:#d83b01'>Pipeline Failure</h2><p>The THOR partner tagging pipeline failed on {{ $now.format('yyyy-MM-dd HH:mm') }}.</p><h3>Error Output</h3><pre style='background:#f5f5f5;padding:12px;border-radius:4px;overflow-x:auto'>{{ $json.stderr || $json.stdout || 'No output captured' }}</pre><p>Exit code: {{ $json.exitCode }}</p><p style='color:#666'>Check the application logs for details.</p>",
+        "additionalFields": {}
+      },
+      "id": "6e67ca71-87c1-4843-aab8-a6182e503855",
+      "name": "Send Error Alert",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [-80, 80],
+      "webhookId": "12d976e3-4704-4ba3-80b5-e7bae02af833",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "NP3s0P2eXvxglbfb",
+          "name": "Microsoft Outlook account"
+        }
+      },
+      "notes": "Alerts Admin when the pipeline fails."
+    }
+  ],
+  "connections": {
+    "Daily 10:00 AM": {
+      "main": [
+        [
+          {
+            "node": "Run Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Success?": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON Result": {
+      "main": [
+        [
+          {
+            "node": "POST to Teams Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Summary to Sales Ops",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Rome",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "thor",
+      "createdAt": "2026-05-03T00:00:00.000Z",
+      "updatedAt": "2026-05-03T00:00:00.000Z"
+    },
+    {
+      "name": "production",
+      "createdAt": "2026-05-03T00:00:00.000Z",
+      "updatedAt": "2026-05-03T00:00:00.000Z"
+    }
+  ],
+  "triggerCount": 1,
   "meta": {
-    "description": "Placeholder — import into n8n and configure nodes as per README pipeline steps"
+    "templateCredsSetupCompleted": true,
+    "instanceId": "07aae0f3e07496de1ab4cfe9aab223dc31c0162f396e07bc0b35acf58779e962",
+    "description": "THOR Agentic Partner Tagging — Daily pipeline via Outlook (Teams webhook auth)."
   }
 }

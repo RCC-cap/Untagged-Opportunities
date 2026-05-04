@@ -1,0 +1,195 @@
+{
+  "name": "THOR Partner Retagging — Phase 1",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily 10:00 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 300],
+      "notes": "Runs daily at 10:00 AM Europe/Rome. Triggers the THOR partner tagging pipeline."
+    },
+    {
+      "parameters": {
+        "command": "cd /app && python -m src.main --json-output 2>&1",
+        "timeout": 3600
+      },
+      "id": "execute-pipeline",
+      "name": "Run Pipeline",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [380, 300],
+      "notes": "Executes the Python pipeline. Outputs JSON summary to stdout. Timeout: 1 hour.",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.exitCode }}",
+              "operation": "equal",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "check-exit-code",
+      "name": "Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [540, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const stdout = $input.first().json.stdout;\ntry {\n  const result = JSON.parse(stdout.trim().split('\\n').pop());\n  return [{ json: result }];\n} catch (e) {\n  return [{ json: { error: 'Failed to parse pipeline output', raw: stdout } }];\n}"
+      },
+      "id": "parse-output",
+      "name": "Parse JSON Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 240],
+      "notes": "Extracts the JSON summary from the last line of stdout."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.POWER_AUTOMATE_SUMMARY_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "subject",
+              "value": "THOR Daily Run — {{ $json.processed }} opportunities processed"
+            },
+            {
+              "name": "body",
+              "value": "<h2>THOR Daily Summary</h2><table><tr><td><strong>Processed:</strong></td><td>{{ $json.processed }}</td></tr><tr><td><strong>Skipped (already done):</strong></td><td>{{ $json.skipped }}</td></tr><tr><td><strong>Sales Leads notified:</strong></td><td>{{ $json.leads_notified }}</td></tr><tr><td><strong>Emails sent:</strong></td><td>{{ $json.emails_sent }}</td></tr><tr><td><strong>LLM calls:</strong></td><td>{{ $json.llm_calls || 'N/A' }}</td></tr><tr><td><strong>Fallbacks:</strong></td><td>{{ $json.llm_fallbacks || 0 }}</td></tr></table><p style='color:#666;margin-top:16px;'>Run completed at {{ $now.toISO() }}</p>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-summary",
+      "name": "Send Summary to Sales Ops",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 240],
+      "notes": "Calls Power Automate HTTP trigger to send daily summary email."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.POWER_AUTOMATE_ERROR_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "subject",
+              "value": "⚠️ THOR Pipeline FAILED — {{ $now.format('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "body",
+              "value": "<h2 style='color:#d83b01;'>Pipeline Failure</h2><p>The THOR partner tagging pipeline failed on {{ $now.format('yyyy-MM-dd HH:mm') }}.</p><h3>Error Output</h3><pre style='background:#f5f5f5;padding:12px;border-radius:4px;overflow-x:auto;'>{{ $json.stderr || $json.stdout || 'No output captured' }}</pre><p>Exit code: {{ $json.exitCode }}</p><p style='color:#666;'>Check the application logs for details.</p>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-error-alert",
+      "name": "Send Error Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 400],
+      "notes": "Calls Power Automate HTTP trigger to send error alert email."
+    }
+  ],
+  "connections": {
+    "Daily 10:00 AM": {
+      "main": [
+        [
+          {
+            "node": "Run Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Success?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Success?": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON Result": {
+      "main": [
+        [
+          {
+            "node": "Send Summary to Sales Ops",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Rome",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "thor",
+      "createdAt": "2026-05-03T00:00:00.000Z",
+      "updatedAt": "2026-05-03T00:00:00.000Z"
+    },
+    {
+      "name": "production",
+      "createdAt": "2026-05-03T00:00:00.000Z",
+      "updatedAt": "2026-05-03T00:00:00.000Z"
+    }
+  ],
+  "triggerCount": 1,
+  "meta": {
+    "description": "THOR Agentic Partner Tagging — Daily pipeline. Downloads .xlsm from Azure Blob, scores untagged opportunities (keyword + LLM reasoning), sends digest emails to Sales Leads, and logs to Cosmos DB.",
+    "instanceId": "thor-production"
+  }
+}

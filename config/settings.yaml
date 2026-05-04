@@ -5,20 +5,30 @@ schedule:
   timezone: "Europe/Rome"
 
 processing:
-  batch_size: 200              # Rows per AI call (GPT 5.4 handles large context)
+  batch_size: 200              # Rows per processing cycle
   max_batches_per_run: 500     # Safety limit per daily run (500 × 200 = 100K rows)
   always_send_email: true      # Every untagged opp is sent to Sales Lead regardless of confidence
   auto_approve_threshold: 90   # Auto-approve if confidence >= this (should-have)
-  skip_already_processed: true # Skip OppIDs already in audit log
+  skip_already_processed: true # Skip OppIDs already in Cosmos DB
+
+blob:
+  container_name: "thor-data"  # Azure Blob container
+  blob_name: "VBA 1.xlsm"     # File name in container
 
 azure_openai:
-  model: "gpt-5.4"             # Single model for all processing
+  model: "gpt-5.4"             # Primary reasoning model
+  deployment: "gpt-5.4"       # Azure deployment name
   temperature: 0.2
   max_tokens: 800
+  fallback_on_error: true      # Fall back to deterministic scoring if LLM fails
 
 scoring:
   account_history_weight: 1.5  # Strong boost when account has prior tagged deals
   min_deals_for_boost: 2       # Minimum prior deals to trigger account history signal
+
+cosmos:
+  database: "thor"             # Cosmos DB database name
+  container: "pipeline-state"  # Container name (partition key: /opp_id)
 
 sharepoint:
   sheet_name: "Sheet1"         # Sheet containing opportunity data
@@ -33,7 +43,7 @@ approval:
   reminder_after_days: 3       # Send reminder after N days
 
 audit:
-  format: "jsonl"              # One JSON object per line
+  format: "jsonl"              # One JSON object per line (local backup)
   retention_days: 365
 
 webhook:
