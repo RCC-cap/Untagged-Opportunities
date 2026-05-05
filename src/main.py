@@ -221,26 +221,36 @@ def run_pipeline(
     logger.info(f"LLM calls: {llm_calls}, fallbacks to deterministic: {llm_fallbacks}")
     logger.info(f"Grouped into {len(recommendations_by_lead)} Sales Lead digests")
 
-    # ── Step 7: Build and send digest emails ────────────────────────────
-    webhook_base = settings.get("webhook", {}).get("base_url", "https://thor.example.com/api")
-    if not dry_run:
-        emails_sent = _send_digest_emails(recommendations_by_lead, webhook_base)
+    # ── Step 7: Build digest emails ───────────────────────────────────
+    webhook_base = settings.get("webhook", {}).get("base_url", "https://thor-api-rcc.azurewebsites.net/api")
+    digests: list[dict] = []
+    for lead_email, opps in recommendations_by_lead.items():
+        tokens = {opp.opp_id: generate_token(opp.opp_id) for opp in opps}
+        html_content = build_digest_email(opps, webhook_base, tokens)
+        _save_email_preview(lead_email, html_content)
+        digests.append({
+            "to": lead_email,
+            "subject": f"THOR — {len(opps)} Partner Tag Recommendations for Review",
+            "html": html_content,
+            "opp_count": len(opps),
+        })
+        # Record email-sent status
+        for opp in opps:
+            record_email_sent(opp_id=opp.opp_id, lead_email=lead_email)
+
+    if dry_run:
+        logger.info(f"DRY RUN — saved {len(digests)} email preview(s) to data/email_previews/")
     else:
-        emails_sent = 0
-        # Still save previews for testing
-        for lead_email, opps in recommendations_by_lead.items():
-            tokens = {opp.opp_id: generate_token(opp.opp_id) for opp in opps}
-            html_content = build_digest_email(opps, webhook_base, tokens)
-            _save_email_preview(lead_email, html_content)
-        logger.info(f"DRY RUN — saved {len(recommendations_by_lead)} email preview(s) to data/email_previews/")
+        logger.info(f"Generated {len(digests)} digest email(s) — included in response for n8n to send")
 
     return {
         "processed": processed_count,
         "skipped": len(processed_ids),
         "leads_notified": len(recommendations_by_lead),
-        "emails_sent": emails_sent,
+        "emails_sent": len(digests),
         "llm_calls": llm_calls,
         "llm_fallbacks": llm_fallbacks,
+        "digests": digests,
     }
 
 

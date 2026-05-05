@@ -13,7 +13,7 @@ processing:
 
 blob:
   container_name: "thor-data"  # Azure Blob container
-  blob_name: "VBA 1.xlsm"     # File name in container
+  blob_name: "demo_test.xlsx"  # File name in container (production: "VBA 1.xlsm")
 
 azure_openai:
   model: "gpt-5.4"             # Primary reasoning model
@@ -47,5 +47,5 @@ audit:
   retention_days: 365
 
 webhook:
-  base_url: "https://thor.example.com/api"  # Replace with actual deployed URL
+  base_url: "https://thor-api-rcc.azurewebsites.net/api"
   token_ttl_hours: 168         # Token valid for 7 days
