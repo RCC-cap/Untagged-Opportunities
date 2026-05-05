@@ -194,57 +194,91 @@ def build_approval_email(
 DIGEST_TEMPLATE = """\
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin: 0; padding: 0; background: #f4f5f7; font-family: 'Segoe UI', Roboto, Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background: #f4f5f7; padding: 32px 0;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body style="margin: 0; padding: 0; background: #eef1f6; font-family: 'Ubuntu', 'Segoe UI', Roboto, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background: #eef1f6; padding: 40px 0;">
     <tr><td align="center">
-      <table width="700" cellpadding="0" cellspacing="0" style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.10);">
+      <table width="720" cellpadding="0" cellspacing="0" style="background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.10);">
 
-        <!-- Header -->
-        <tr><td style="background: linear-gradient(135deg, #0070AD 0%, #12ABDB 100%); padding: 32px 36px;">
+        <!-- Logo Bar -->
+        <tr><td style="background: #ffffff; padding: 20px 40px; border-bottom: 1px solid #eee;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td>
-                <span style="color: white; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">THOR</span>
-                <span style="color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 400; padding-left: 8px;">Agentic Partner Tagging</span>
+                <img src="https://www.capgemini.com/wp-content/themes/capgemini2020/assets/images/logo.svg"
+                     alt="Capgemini" height="28" style="display: block;" />
               </td>
               <td align="right" style="vertical-align: middle;">
-                <span style="display: inline-block; background: rgba(255,255,255,0.15); color: white; padding: 5px 14px; border-radius: 16px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Daily Recommendations</span>
+                <span style="display: inline-block; background: #0070AD; color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; font-family: 'Ubuntu', sans-serif; letter-spacing: 0.3px;">&#9889; THOR</span>
               </td>
             </tr>
           </table>
         </td></tr>
 
-        <!-- Introduction -->
-        <tr><td style="padding: 28px 36px 20px;">
-          <p style="margin: 0 0 14px; color: #222; font-size: 15px; font-weight: 600; line-height: 1.4;">
-            Partner Tag Recommendations for Your Review
+        <!-- Header Gradient -->
+        <tr><td style="background: linear-gradient(135deg, #0070AD 0%, #12ABDB 60%, #2EDAA8 100%); padding: 36px 40px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <p style="margin: 0 0 6px; color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 500; font-family: 'Ubuntu', sans-serif; text-transform: uppercase; letter-spacing: 1px;">Agentic Partner Tagging</p>
+                <p style="margin: 0; color: white; font-size: 26px; font-weight: 700; font-family: 'Ubuntu', sans-serif; letter-spacing: -0.3px;">Partner Recommendations</p>
+              </td>
+              <td align="right" style="vertical-align: bottom;">
+                <span style="display: inline-block; background: rgba(255,255,255,0.18); color: white; padding: 7px 18px; border-radius: 20px; font-size: 12px; font-weight: 600; font-family: 'Ubuntu', sans-serif;">&#128197; Daily Digest</span>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+
+        <!-- Greeting & Introduction -->
+        <tr><td style="padding: 32px 40px 12px;">
+          <p style="margin: 0 0 18px; color: #1a1a1a; font-size: 18px; font-weight: 500; font-family: 'Ubuntu', sans-serif; line-height: 1.4;">
+            Dear {{ lead_name }},
           </p>
-          <p style="margin: 0 0 12px; color: #555; font-size: 13px; line-height: 1.7;">
-            THOR has analysed your untagged opportunities using keyword matching, account history,
-            technology signals, and our partner taxonomy to recommend the best-fit partner for each.
-            These recommendations help ensure accurate pipeline reporting and partner attribution.
+          <p style="margin: 0 0 16px; color: #444; font-size: 15px; line-height: 1.8; font-family: 'Ubuntu', sans-serif;">
+            You have untagged opportunities in your pipeline that are missing a partner attribution.
+            <strong style="color: #0070AD;">Accurate partner tagging is critical</strong> for our business &mdash;
+            it drives correct revenue recognition, enables strategic alliance reporting to leadership,
+            and ensures our hyperscaler &amp; partner investments are properly measured.
           </p>
-          <p style="margin: 0; color: #555; font-size: 13px; line-height: 1.7;">
-            <strong style="color: #333;">Action required:</strong> Review each opportunity below.
-            Click <strong>"Select"</strong> to confirm the recommended partner, or <strong>"Reject All"</strong>
-            if none of the suggestions apply. Your feedback improves future recommendations.
+          <p style="margin: 0 0 16px; color: #444; font-size: 15px; line-height: 1.8; font-family: 'Ubuntu', sans-serif;">
+            THOR has analysed your opportunities using <strong>keyword matching</strong>, <strong>account history</strong>,
+            <strong>technology signals</strong>, and our <strong>partner taxonomy</strong> to recommend the best-fit partner.
           </p>
         </td></tr>
 
+        <!-- Action Required Box -->
+        <tr><td style="padding: 0 40px 24px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background: #EBF5FF; border-radius: 12px; border-left: 5px solid #0070AD; overflow: hidden;">
+            <tr><td style="padding: 18px 24px;">
+              <p style="margin: 0; color: #0070AD; font-size: 15px; font-weight: 700; font-family: 'Ubuntu', sans-serif;">
+                &#9997;&#65039; Action required
+              </p>
+              <p style="margin: 8px 0 0; color: #333; font-size: 14px; line-height: 1.7; font-family: 'Ubuntu', sans-serif;">
+                Review each opportunity below. Click <strong>"Select"</strong> to confirm the recommended partner,
+                or <strong>"Reject All"</strong> if none of the suggestions apply. Your feedback improves future recommendations.
+              </p>
+            </td></tr>
+          </table>
+        </td></tr>
+
         <!-- Summary bar -->
-        <tr><td style="padding: 0 36px;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background: #EAF6FD; border-radius: 8px; overflow: hidden;">
+        <tr><td style="padding: 0 40px 20px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0070AD 0%, #12ABDB 100%); border-radius: 12px; overflow: hidden;">
             <tr>
-              <td style="padding: 14px 20px;">
+              <td style="padding: 18px 24px;">
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td style="font-size: 13px; color: #0070AD; font-weight: 600;">
-                      &#128203; {{ opportunities|length }} opportunit{{ 'y' if opportunities|length == 1 else 'ies' }} awaiting review
+                    <td style="font-size: 15px; color: white; font-weight: 600; font-family: 'Ubuntu', sans-serif;">
+                      &#128202; {{ opportunities|length }} opportunit{{ 'y' if opportunities|length == 1 else 'ies' }} awaiting review
                     </td>
-                    <td align="right" style="font-size: 13px; color: #444; font-weight: 500;">
+                    <td align="right" style="font-size: 15px; color: white; font-weight: 700; font-family: 'Ubuntu', sans-serif;">
                       {% set total_value = opportunities|sum(attribute='euro_bkngs') %}
-                      {% if total_value > 0 %}Pipeline value: <strong>&euro;{{ "{:,.0f}".format(total_value) }}</strong>{% endif %}
+                      {% if total_value > 0 %}&euro;{{ "{:,.0f}".format(total_value) }} pipeline value{% endif %}
                     </td>
                   </tr>
                 </table>
@@ -254,66 +288,63 @@ DIGEST_TEMPLATE = """\
         </td></tr>
 
         <!-- Confidence legend -->
-        <tr><td style="padding: 16px 36px 8px;">
-          <table cellpadding="0" cellspacing="0" style="font-size: 11px; color: #888;">
-            <tr>
-              <td style="padding-right: 6px; font-weight: 600; color: #666;">Confidence:</td>
-              <td style="padding-right: 16px;"><span style="display: inline-block; background: #e6f4ea; color: #1e7e34; padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 10px;">&ge;80%</span> High</td>
-              <td style="padding-right: 16px;"><span style="display: inline-block; background: #fff8e1; color: #b8860b; padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 10px;">50-79%</span> Medium</td>
-              <td style="padding-right: 16px;"><span style="display: inline-block; background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 10px;">30-49%</span> Low</td>
-              <td><span style="display: inline-block; background: #fde7e7; color: #c62828; padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 10px;">&lt;30%</span> Uncertain</td>
-            </tr>
+        <tr><td style="padding: 0 40px 20px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background: #f9fafb; border-radius: 10px; border: 1px solid #e8eaed;">
+            <tr><td style="padding: 14px 20px;">
+              <table cellpadding="0" cellspacing="0" style="font-size: 13px; color: #666; font-family: 'Ubuntu', sans-serif;">
+                <tr>
+                  <td style="padding-right: 8px; font-weight: 700; color: #333;">&#128308; Confidence:</td>
+                  <td style="padding-right: 20px;"><span style="display: inline-block; background: #e6f4ea; color: #1e7e34; padding: 3px 10px; border-radius: 12px; font-weight: 700; font-size: 12px;">&ge;80%</span> High</td>
+                  <td style="padding-right: 20px;"><span style="display: inline-block; background: #fff8e1; color: #b8860b; padding: 3px 10px; border-radius: 12px; font-weight: 700; font-size: 12px;">50-79%</span> Medium</td>
+                  <td style="padding-right: 20px;"><span style="display: inline-block; background: #fff3e0; color: #e65100; padding: 3px 10px; border-radius: 12px; font-weight: 700; font-size: 12px;">30-49%</span> Low</td>
+                  <td><span style="display: inline-block; background: #fde7e7; color: #c62828; padding: 3px 10px; border-radius: 12px; font-weight: 700; font-size: 12px;">&lt;30%</span> Uncertain</td>
+                </tr>
+              </table>
+            </td></tr>
           </table>
         </td></tr>
 
         {% for opp in opportunities %}
         <!-- Opportunity Card -->
-        <tr><td style="padding: 12px 36px 16px;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e0e3e8; border-radius: 10px; overflow: hidden;">
+        <tr><td style="padding: 8px 40px 20px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="border: 2px solid #e0e3e8; border-radius: 14px; overflow: hidden;">
 
             <!-- Card header -->
-            <tr><td style="background: linear-gradient(180deg, #f8f9fb 0%, #ffffff 100%); padding: 16px 20px; border-bottom: 1px solid #e8eaed;">
+            <tr><td style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); padding: 20px 24px; border-bottom: 2px solid #e8eaed;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="font-size: 16px; font-weight: 600; color: #1a1a1a;">{{ opp.opp_name }}</td>
+                  <td style="font-size: 18px; font-weight: 700; color: #1a1a1a; font-family: 'Ubuntu', sans-serif;">{{ opp.opp_name }}</td>
                   {% if opp.euro_bkngs > 0 %}
-                  <td align="right" style="font-size: 15px; font-weight: 700; color: #0070AD;">&euro;{{ "{:,.0f}".format(opp.euro_bkngs) }}</td>
+                  <td align="right" style="font-size: 17px; font-weight: 700; color: #0070AD; font-family: 'Ubuntu', sans-serif;">&euro;{{ "{:,.0f}".format(opp.euro_bkngs) }}</td>
                   {% endif %}
                 </tr>
               </table>
             </td></tr>
 
             <!-- Card meta -->
-            <tr><td style="padding: 14px 20px 10px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 12px; color: #777;">
+            <tr><td style="padding: 16px 24px 12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 13px; color: #666; font-family: 'Ubuntu', sans-serif;">
                 <tr>
-                  <td style="padding: 3px 0;"><span style="color: #aaa;">Opp ID:</span> <strong style="color: #444;">{{ opp.opp_id }}</strong></td>
-                  <td style="padding: 3px 0;"><span style="color: #aaa;">Account:</span> <strong style="color: #444;">{{ opp.account_name }}</strong></td>
-                  {% if opp.stage %}<td style="padding: 3px 0;"><span style="color: #aaa;">Stage:</span> <strong style="color: #444;">{{ opp.stage }}</strong></td>{% endif %}
+                  <td style="padding: 4px 0;"><span style="color: #999;">&#128196; ID:</span> <strong style="color: #333;">{{ opp.opp_id }}</strong></td>
+                  <td style="padding: 4px 0;"><span style="color: #999;">&#127970; Account:</span> <strong style="color: #333;">{{ opp.account_name }}</strong></td>
+                  {% if opp.stage %}<td style="padding: 4px 0;"><span style="color: #999;">&#128640; Stage:</span> <strong style="color: #333;">{{ opp.stage }}</strong></td>{% endif %}
                 </tr>
               </table>
             </td></tr>
 
-            <!-- Recommendation explanation -->
-            <tr><td style="padding: 4px 20px 12px;">
-              <p style="margin: 0; font-size: 12px; color: #666; line-height: 1.5; font-style: italic;">
-                Based on opportunity name, technology stack, account partner history, and Capgemini partner taxonomy.
-              </p>
-            </td></tr>
-
             <!-- Candidates -->
             {% for candidate in opp.candidates %}
-            <tr><td style="padding: 5px 20px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="border: {% if loop.first %}2px solid #0070AD{% else %}1px solid #e0e0e0{% endif %}; border-radius: 8px; overflow: hidden;">
+            <tr><td style="padding: 6px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="border: {% if loop.first %}2px solid #0070AD{% else %}1px solid #e0e0e0{% endif %}; border-radius: 12px; overflow: hidden; {% if loop.first %}box-shadow: 0 2px 8px rgba(0,112,173,0.12);{% endif %}">
                 <tr>
-                  <td style="background: {% if loop.first %}#0070AD{% else %}#fafbfc{% endif %}; padding: 12px 16px;">
+                  <td style="background: {% if loop.first %}linear-gradient(135deg, #0070AD 0%, #12ABDB 100%){% else %}#f8f9fb{% endif %}; padding: 14px 20px;">
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="color: {% if loop.first %}white{% else %}#333{% endif %}; font-size: 14px; font-weight: 700;">
-                          {% if loop.first %}&#9733; Recommended: {% endif %}{{ candidate.partner }}
+                        <td style="color: {% if loop.first %}white{% else %}#333{% endif %}; font-size: 16px; font-weight: 700; font-family: 'Ubuntu', sans-serif;">
+                          {% if loop.first %}&#11088; Recommended: {% else %}&#128313; Alternative: {% endif %}{{ candidate.partner }}
                         </td>
                         <td align="right">
-                          <span style="display: inline-block; background: {% if loop.first %}rgba(255,255,255,0.2){% else %}{{ candidate.badge_bg }}{% endif %}; color: {% if loop.first %}white{% else %}{{ candidate.badge_fg }}{% endif %}; padding: 3px 12px; border-radius: 12px; font-size: 12px; font-weight: 700;">
+                          <span style="display: inline-block; background: {% if loop.first %}rgba(255,255,255,0.25){% else %}{{ candidate.badge_bg }}{% endif %}; color: {% if loop.first %}white{% else %}{{ candidate.badge_fg }}{% endif %}; padding: 4px 14px; border-radius: 14px; font-size: 13px; font-weight: 700; font-family: 'Ubuntu', sans-serif;">
                             {{ candidate.confidence }}%
                           </span>
                         </td>
@@ -322,12 +353,12 @@ DIGEST_TEMPLATE = """\
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 14px 16px; background: white;">
-                    <p style="margin: 0 0 4px; font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.5px;">Why this partner?</p>
-                    <p style="margin: 0 0 14px; font-size: 13px; color: #555; line-height: 1.6;">{{ candidate.rationale }}</p>
+                  <td style="padding: 16px 20px; background: white;">
+                    <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; color: #0070AD; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Ubuntu', sans-serif;">&#128269; Why this partner?</p>
+                    <p style="margin: 0 0 16px; font-size: 14px; color: #444; line-height: 1.7; font-family: 'Ubuntu', sans-serif;">{{ candidate.rationale }}</p>
                     <a href="{{ webhook_base }}/select?opp_id={{ opp.opp_id }}&partner={{ candidate.partner }}&token={{ opp.token }}"
-                       style="display: inline-block; background: {% if loop.first %}#0070AD{% else %}#f0f0f0{% endif %}; color: {% if loop.first %}white{% else %}#333{% endif %}; padding: 10px 28px; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; {% if not loop.first %}border: 1px solid #ddd;{% endif %}">
-                      &#10003; Select {{ candidate.partner }}
+                       style="display: inline-block; background: {% if loop.first %}linear-gradient(135deg, #0070AD 0%, #12ABDB 100%){% else %}#f4f5f7{% endif %}; color: {% if loop.first %}white{% else %}#333{% endif %}; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: 'Ubuntu', sans-serif; {% if not loop.first %}border: 2px solid #ddd;{% endif %}">
+                      &#10004; Select {{ candidate.partner }}
                     </a>
                   </td>
                 </tr>
@@ -336,12 +367,12 @@ DIGEST_TEMPLATE = """\
             {% endfor %}
 
             <!-- Reject -->
-            <tr><td style="padding: 14px 20px 18px;">
+            <tr><td style="padding: 16px 24px 22px;">
               <a href="{{ webhook_base }}/reject?opp_id={{ opp.opp_id }}&token={{ opp.token }}"
-                 style="display: inline-block; background: #fff5f5; color: #d83b01; padding: 9px 24px; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid #f5c6c6;">
-                &#10005; Reject All Suggestions
+                 style="display: inline-block; background: #FFF0ED; color: #d83b01; padding: 11px 28px; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 700; border: 2px solid #FECDC8; font-family: 'Ubuntu', sans-serif;">
+                &#10060; Reject All Suggestions
               </a>
-              <span style="display: inline-block; padding-left: 12px; font-size: 11px; color: #aaa; vertical-align: middle;">No partner applies to this opportunity</span>
+              <span style="display: inline-block; padding-left: 14px; font-size: 12px; color: #999; vertical-align: middle; font-family: 'Ubuntu', sans-serif;">No partner applies</span>
             </td></tr>
 
           </table>
@@ -349,31 +380,37 @@ DIGEST_TEMPLATE = """\
         {% endfor %}
 
         <!-- How it works -->
-        <tr><td style="padding: 8px 36px 20px;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background: #f8f9fb; border-radius: 8px; border: 1px solid #eee;">
-            <tr><td style="padding: 16px 20px;">
-              <p style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #444;">How does THOR generate recommendations?</p>
-              <p style="margin: 0; font-size: 11px; color: #777; line-height: 1.7;">
-                THOR scores partners using: <strong>keyword extraction</strong> from the opportunity name and technology fields,
-                <strong>account history</strong> (previous partner tags for the same account),
-                <strong>taxonomy mapping</strong> against Capgemini's official partner portfolio, and
-                <strong>strategic weighting</strong> (Tier-1 hyperscalers receive a priority boost).
-                The confidence percentage reflects the combined signal strength.
+        <tr><td style="padding: 8px 40px 24px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(180deg, #f0f7ff 0%, #f8fbff 100%); border-radius: 12px; border: 1px solid #d4e5f7;">
+            <tr><td style="padding: 20px 24px;">
+              <p style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #0070AD; font-family: 'Ubuntu', sans-serif;">&#129302; How does THOR generate recommendations?</p>
+              <table cellpadding="0" cellspacing="0" style="font-size: 13px; color: #555; line-height: 1.8; font-family: 'Ubuntu', sans-serif;">
+                <tr><td style="padding: 3px 0;">&#128273; <strong>Keyword extraction</strong> &mdash; Analyses opportunity name, offer, and technology fields</td></tr>
+                <tr><td style="padding: 3px 0;">&#128200; <strong>Account history</strong> &mdash; Looks at previously tagged opportunities for the same account to identify established partner relationships</td></tr>
+                <tr><td style="padding: 3px 0;">&#127959; <strong>Taxonomy mapping</strong> &mdash; Matches against Capgemini&rsquo;s official partner portfolio and technology domains</td></tr>
+                <tr><td style="padding: 3px 0;">&#127942; <strong>Strategic weighting</strong> &mdash; Tier-1 hyperscalers (Microsoft, AWS, Google, SAP, Oracle) receive a priority boost</td></tr>
+              </table>
+              <p style="margin: 12px 0 0; font-size: 12px; color: #888; font-family: 'Ubuntu', sans-serif;">
+                The confidence % reflects the combined signal strength from all scoring factors.
               </p>
             </td></tr>
           </table>
         </td></tr>
 
         <!-- Footer -->
-        <tr><td style="background: #f0f2f5; padding: 22px 36px; border-top: 1px solid #e0e3e8;">
+        <tr><td style="background: #1a2332; padding: 28px 40px; border-top: none;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="font-size: 11px; color: #888; line-height: 1.7;">
-                Automated by <strong style="color: #0070AD;">THOR</strong> Agentic Partner Tagging<br>
-                <span style="color: #aaa;">Capgemini Sales Operations &bull; Technology &amp; Innovation</span>
+              <td>
+                <p style="margin: 0 0 4px; font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 600; font-family: 'Ubuntu', sans-serif;">
+                  THOR &mdash; Agentic Partner Tagging
+                </p>
+                <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.5); font-family: 'Ubuntu', sans-serif;">
+                  Capgemini Switzerland &bull; Technology &amp; Innovation
+                </p>
               </td>
-              <td align="right" style="font-size: 11px; color: #bbb; vertical-align: bottom;">
-                {{ now }}
+              <td align="right" style="vertical-align: bottom;">
+                <p style="margin: 0; font-size: 11px; color: rgba(255,255,255,0.4); font-family: 'Ubuntu', sans-serif;">{{ now }}</p>
               </td>
             </tr>
           </table>
@@ -391,6 +428,7 @@ def build_digest_email(
     opportunities: list[OpportunityRecommendation],
     webhook_base: str,
     tokens: dict[str, str],
+    lead_name: str = "",
 ) -> str:
     """Render a digest email containing multiple opportunities for one Sales Lead.
 
@@ -398,6 +436,7 @@ def build_digest_email(
         opportunities: List of opportunities with their ranked candidates.
         webhook_base: Base URL for webhook callbacks.
         tokens: Dict of {opp_id: hmac_token} for secure links.
+        lead_name: Display name for the greeting (e.g. "Riccardo").
 
     Returns:
         Rendered HTML string.
@@ -429,5 +468,6 @@ def build_digest_email(
     return template.render(
         opportunities=opp_data,
         webhook_base=webhook_base,
+        lead_name=lead_name or "Sales Lead",
         now=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     )

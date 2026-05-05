@@ -226,7 +226,9 @@ def run_pipeline(
     digests: list[dict] = []
     for lead_email, opps in recommendations_by_lead.items():
         tokens = {opp.opp_id: generate_token(opp.opp_id) for opp in opps}
-        html_content = build_digest_email(opps, webhook_base, tokens)
+        # Extract first name from email for greeting (e.g. "riccardo-carlo.conte@..." → "Riccardo-Carlo")
+        lead_name = lead_email.split("@")[0].split(".")[0].replace("-", "-").title() if "@" in lead_email else "Sales Lead"
+        html_content = build_digest_email(opps, webhook_base, tokens, lead_name=lead_name)
         _save_email_preview(lead_email, html_content)
         digests.append({
             "to": lead_email,
