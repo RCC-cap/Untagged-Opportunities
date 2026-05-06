@@ -232,7 +232,7 @@ def run_pipeline(
         _save_email_preview(lead_email, html_content)
         digests.append({
             "to": lead_email,
-            "subject": f"THOR — {len(opps)} Partner Tag Recommendations for Review",
+            "subject": f"UOA — {len(opps)} Partner Tag Recommendations for Review",
             "html": html_content,
             "opp_count": len(opps),
         })
@@ -297,7 +297,8 @@ def _send_digest_emails(
         tokens = {opp.opp_id: generate_token(opp.opp_id) for opp in opps}
 
         # Build HTML
-        html_content = build_digest_email(opps, webhook_base, tokens)
+        lead_name = lead_email.split("@")[0].split(".")[0].replace("-", "-").title() if "@" in lead_email else "Sales Lead"
+        html_content = build_digest_email(opps, webhook_base, tokens, lead_name=lead_name)
 
         # TODO: Send via Microsoft Graph API
         logger.info(f"Would send digest to {lead_email}: {len(opps)} opportunities")
