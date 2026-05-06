@@ -84,10 +84,26 @@ def run_pipeline(
     logger.info(f"Total rows: {df.height:,}")
 
     # ── Step 3: Filter untagged + skip already processed (Cosmos DB) ────
-    processed_ids = get_processed_ids()
+    processed_ids = get_processed_ids() if settings["processing"].get("skip_already_processed", True) else set()
     logger.info(f"Already processed: {len(processed_ids):,} opportunities")
     untagged_df = filter_untagged(df, processed_ids=processed_ids)
     logger.info(f"Untagged to process: {untagged_df.height:,}")
+
+    # ── Step 3b: Test mode — filter to specific accounts ────────────────
+    test_cfg = settings.get("test", {})
+    if test_cfg.get("enabled", False):
+        test_accounts = test_cfg.get("accounts", [])
+        max_per_account = test_cfg.get("max_per_account", 2)
+        override_lead = test_cfg.get("override_lead")
+        logger.info(f"TEST MODE: filtering to accounts {test_accounts}, {max_per_account} per account")
+
+        # Take N opps per test account
+        test_frames = []
+        for acct in test_accounts:
+            acct_df = untagged_df.filter(pl.col("Account Name") == acct).head(max_per_account)
+            test_frames.append(acct_df)
+        untagged_df = pl.concat(test_frames) if test_frames else untagged_df.head(0)
+        logger.info(f"TEST MODE: {untagged_df.height} opportunities selected")
 
     if untagged_df.height == 0:
         logger.info("No new untagged opportunities. Done.")
@@ -96,7 +112,7 @@ def run_pipeline(
     # ── Step 4: Prepare tagged data for account history + similarity ────
     tagged_df = df.filter(
         pl.col("Partner").is_not_null()
-        & ~pl.col("Partner").cast(pl.Utf8).is_in(["No Vendor/Partner", "-", ""])
+        & ~pl.col("Partner").cast(pl.Utf8).is_in(["No Vendor/Partner", "-", "", "Open Source", "Capgemini"])
     )
     logger.info(f"Tagged rows available for scoring: {tagged_df.height:,}")
 
@@ -172,7 +188,7 @@ def run_pipeline(
                     llm_fallbacks += 1
 
             # ── Map to email model ──────────────────────────────────────
-            euro_bkngs_raw = row_dict.get("Euro Bkngs", 0)
+            euro_bkngs_raw = row_dict.get("Converted Booking", row_dict.get("Euro Bkngs", 0))
             euro_bkngs = float(euro_bkngs_raw) if euro_bkngs_raw else 0.0
             stage = str(row_dict.get("Stage", ""))
 
@@ -192,8 +208,11 @@ def run_pipeline(
                 stage=stage,
             )
 
-            # Group by Sales Lead email
-            lead_email = opty_lead if opty_lead and "@" in opty_lead else "unassigned"
+            # Group by Sales Lead email (test mode: override to single lead)
+            if test_cfg.get("enabled") and test_cfg.get("override_lead"):
+                lead_email = test_cfg["override_lead"]
+            else:
+                lead_email = opty_lead if opty_lead and "@" in opty_lead else "unassigned"
             recommendations_by_lead[lead_email].append(opp_rec)
 
             # ── Persist recommendation to Cosmos DB ─────────────────────

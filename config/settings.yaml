@@ -5,19 +5,29 @@ schedule:
   timezone: "Europe/Rome"
 
 processing:
-  batch_size: 200              # Rows per processing cycle
-  max_batches_per_run: 500     # Safety limit per daily run (500 × 200 = 100K rows)
+  batch_size: 6                # Rows per processing cycle (test: 6, prod: 200)
+  max_batches_per_run: 1       # Safety limit per daily run (test: 1 batch)
   always_send_email: true      # Every untagged opp is sent to Sales Lead regardless of confidence
   auto_approve_threshold: 90   # Auto-approve if confidence >= this (should-have)
-  skip_already_processed: true # Skip OppIDs already in Cosmos DB
+  skip_already_processed: false # Skip OppIDs already in Cosmos DB
+
+# Test mode: filter to specific accounts and override Opty Lead
+test:
+  enabled: true
+  accounts:
+    - "GSK | BE"
+    - "TOYOTA Motor Europe"
+    - "Roche Holding AG"
+  max_per_account: 2           # Process N opps per test account
+  override_lead: "riccardo-carlo.conte@capgemini.com"
 
 blob:
   container_name: "thor-data"  # Azure Blob container
-  blob_name: "demo_test.xlsx"  # File name in container (production: "VBA 1.xlsm")
+  blob_name: "Copy of Untagged optys 20.04.2026.xlsx"
 
 azure_openai:
-  model: "gpt-5.4"             # Primary reasoning model
-  deployment: "gpt-5.4"       # Azure deployment name
+  model: "gpt-4o-mini"         # Primary reasoning model
+  deployment: "gpt-4o-mini"   # Azure deployment name
   temperature: 0.2
   max_tokens: 800
   fallback_on_error: true      # Fall back to deterministic scoring if LLM fails

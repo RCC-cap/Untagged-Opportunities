@@ -7,7 +7,7 @@ from pathlib import Path
 import polars as pl
 import yaml
 
-UNTAGGED_VALUES = {"No Vendor/Partner", "-", "", None}
+UNTAGGED_VALUES = {"No Vendor/Partner", "-", "", None, "Open Source", "Capgemini"}
 
 
 def load_untagged_values(config_path: str = "config/partners.yaml") -> set[str]:

@@ -213,7 +213,7 @@ def _get_client() -> AzureOpenAI:
 
     _client = AzureOpenAI(
         azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-        api_key=os.environ["AZURE_OPENAI_API_KEY"],
+        api_key=os.environ.get("AZURE_OPENAI_KEY") or os.environ.get("AZURE_OPENAI_API_KEY", ""),
         api_version=os.environ.get("AZURE_OPENAI_API_VERSION", "2024-12-01-preview"),
     )
     return _client
@@ -239,8 +239,9 @@ def _build_user_message(
             "technology": opportunity.get("Technology", ""),
             "portfolio": opportunity.get("Portfolio", ""),
             "sector": opportunity.get("Sector", ""),
-            "country": opportunity.get("Country", ""),
-            "business_line": opportunity.get("Business Line L1", ""),
+            "country": opportunity.get("Account Country", opportunity.get("Country", "")),
+            "business_line": opportunity.get("Business Line Level 1", opportunity.get("Business Line L1", "")),
+            "gen_ai_technology": opportunity.get("Gen AI Technology", ""),
         },
         "extracted_keywords": keywords,
         "signals": {

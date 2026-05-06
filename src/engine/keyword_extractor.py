@@ -17,6 +17,8 @@ def extract_keywords(row: dict) -> list[str]:
         row.get("Portfolio", ""),
         row.get("Technology", ""),
         row.get("Account Name", ""),
+        row.get("Gen AI Technology", ""),
+        row.get("Sector", ""),
     ]
 
     combined = " ".join(str(f) for f in text_fields if f)

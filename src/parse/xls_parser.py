@@ -59,11 +59,19 @@ def parse_xlsm(
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 
-    df = pl.read_excel(
-        file_path,
-        sheet_name=sheet_name,
-        engine="calamine",
-    )
+    try:
+        df = pl.read_excel(
+            file_path,
+            sheet_name=sheet_name,
+            engine="calamine",
+        )
+    except ValueError:
+        # Sheet name not found — fall back to first sheet
+        df = pl.read_excel(
+            file_path,
+            sheet_id=1,
+            engine="calamine",
+        )
 
     # Keep only columns that exist in the file
     available = [c for c in COLUMNS if c in df.columns]
