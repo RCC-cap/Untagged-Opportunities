@@ -36,6 +36,11 @@ scoring:
   account_history_weight: 1.5  # Strong boost when account has prior tagged deals
   min_deals_for_boost: 2       # Minimum prior deals to trigger account history signal
 
+# Manual overrides: when you KNOW the correct partner for an account
+# These inject a 95% confidence signal that overrides weak/missing data
+account_overrides:
+  "Roche Holding AG": "Microsoft"
+
 cosmos:
   database: "thor"             # Cosmos DB database name
   container: "pipeline-state"  # Container name (partition key: /opp_id)

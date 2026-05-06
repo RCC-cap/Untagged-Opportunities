@@ -228,150 +228,183 @@ DIGEST_TEMPLATE = """\
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!--[if mso]><style>td,th{font-family:Arial,sans-serif!important}</style><![endif]-->
 </head>
-<body style="margin:0;padding:0;background:#f5f6f8;font-family:'Segoe UI',Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6f8;padding:24px 0;">
+<body style="margin:0;padding:0;background:#f0f2f5;font-family:'Segoe UI',Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f2f5;padding:32px 0;">
     <tr><td align="center">
-      <table width="620" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;border:1px solid #e4e7ec;">
+      <table width="740" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;border:1px solid #dde1e6;">
 
         <!-- Header -->
-        <tr><td style="padding:22px 28px 18px;border-bottom:1px solid #eee;">
+        <tr><td style="background:linear-gradient(135deg,#003366 0%,#0070AD 100%);padding:28px 36px;border-radius:12px 12px 0 0;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td>
-                <span style="font-size:18px;font-weight:700;color:#0070AD;letter-spacing:-0.3px;">&#x1F916; UOA</span>
-                <span style="font-size:12px;color:#666;font-weight:400;padding-left:6px;">Untagged Opportunity Agent</span>
-              </td>
-              <td align="right"><span style="font-size:11px;color:#999;">Pipeline Partner Attribution</span></td>
+              <td style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:-0.3px;">Partner Tag Recommendations</td>
+              <td align="right" style="color:rgba(255,255,255,0.7);font-size:11px;letter-spacing:0.3px;">THOR Automated Analysis</td>
             </tr>
           </table>
         </td></tr>
 
         <!-- Intro -->
-        <tr><td style="padding:22px 28px 12px;">
-          <p style="margin:0 0 4px;font-size:15px;color:#1a1a1a;font-weight:500;">Hi {{ lead_name }},</p>
-          <p style="margin:10px 0 0;font-size:13px;color:#555;line-height:1.7;">
-            I found <strong>{{ opportunities|length }} opportunit{{ 'y' if opportunities|length == 1 else 'ies' }}</strong>
-            in your pipeline missing a partner tag. I analyzed each one against our partner taxonomy,
-            account history, and technology signals to suggest the most likely partner.
+        <tr><td style="padding:28px 36px 16px;">
+          <p style="margin:0 0 6px;font-size:16px;color:#1a1a1a;font-weight:500;">Hi {{ lead_name }},</p>
+          <p style="margin:12px 0 0;font-size:14px;color:#444;line-height:1.7;">
+            I found <strong>{{ total_opps }} opportunit{{ 'y' if total_opps == 1 else 'ies' }}</strong>
+            in your pipeline without a partner tag. I analyzed each one using account history,
+            technology signals, and our partner taxonomy to recommend the most likely partner.
           </p>
-          <p style="margin:8px 0 0;font-size:13px;color:#555;line-height:1.7;">
-            &#x1F4A1; <strong>Why you need to confirm:</strong> Partner tags drive revenue attribution and alliance
-            reporting. I can suggest, but only you know the deal context &mdash; so final say is yours.
+          <p style="margin:10px 0 0;font-size:13px;color:#666;line-height:1.7;">
+            Partner tags drive revenue attribution and alliance reporting.
+            Only you know the deal context &mdash; please confirm or suggest a different partner below.
           </p>
         </td></tr>
 
-        <!-- Summary pill -->
-        <tr><td style="padding:8px 28px 18px;">
-          <table cellpadding="0" cellspacing="0" style="background:#f0f7ff;border-radius:8px;width:100%;">
-            <tr><td style="padding:12px 16px;">
-              <span style="font-size:13px;color:#0070AD;font-weight:600;">
-                {% set total_value = opportunities|sum(attribute='euro_bkngs') %}
-                &#x1F4CB; {{ opportunities|length }} opportunit{{ 'y' if opportunities|length == 1 else 'ies' }} to review
-                {% if total_value > 0 %}&middot; &euro;{{ "{:,.0f}".format(total_value) }} pipeline value{% endif %}
-              </span>
-            </td></tr>
-          </table>
-        </td></tr>
-
-        <!-- Confidence legend (once) -->
-        <tr><td style="padding:0 28px 14px;">
-          <table cellpadding="0" cellspacing="0" style="font-size:11px;color:#888;">
+        <!-- Confidence legend -->
+        <tr><td style="padding:4px 36px 24px;">
+          <table cellpadding="0" cellspacing="0" style="font-size:12px;color:#555;">
             <tr>
-              <td style="padding-right:14px;">&#x1F7E2; <strong style="color:#1e7e34;">80%+</strong> Strong match</td>
-              <td style="padding-right:14px;">&#x1F7E1; <strong style="color:#b8860b;">50-79%</strong> Good match</td>
-              <td>&#x1F534; <strong style="color:#c62828;">&lt;50%</strong> Needs your review</td>
+              <td style="padding-right:24px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1e7e34;vertical-align:middle;margin-right:5px;"></span><strong>80%+</strong> Strong match</td>
+              <td style="padding-right:24px;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b8860b;vertical-align:middle;margin-right:5px;"></span><strong>50-79%</strong> Good match</td>
+              <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c62828;vertical-align:middle;margin-right:5px;"></span><strong>&lt;50%</strong> Needs your input</td>
             </tr>
           </table>
         </td></tr>
 
-        {% for opp in opportunities %}
+        {% for account_name, opps in grouped.items() %}
+        <!-- Account Section Header -->
+        <tr><td style="padding:8px 36px 4px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom:2px solid #0070AD;margin-bottom:4px;">
+            <tr>
+              <td style="font-size:17px;font-weight:700;color:#003366;padding:8px 0 8px;">{{ account_name }}</td>
+              <td align="right" style="font-size:12px;color:#888;padding-bottom:8px;">{{ opps|length }} opportunit{{ 'y' if opps|length == 1 else 'ies' }}</td>
+            </tr>
+          </table>
+        </td></tr>
+
+        {% for opp in opps %}
         <!-- Opportunity Card -->
-        <tr><td style="padding:4px 28px 14px;">
+        <tr><td style="padding:6px 36px 10px;">
           <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e4e7ec;border-radius:10px;overflow:hidden;">
 
-            <!-- Card header -->
-            <tr><td style="padding:14px 18px 6px;background:#fafbfc;">
+            <!-- Opp name row -->
+            <tr><td style="padding:14px 20px 8px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="font-size:14px;font-weight:600;color:#1a1a1a;">&#x1F4BC; {{ opp.opp_name }}</td>
-                  {% if opp.euro_bkngs > 0 %}
-                  <td align="right" style="font-size:13px;font-weight:700;color:#0070AD;white-space:nowrap;">&euro;{{ "{:,.0f}".format(opp.euro_bkngs) }}</td>
-                  {% endif %}
-                </tr>
-                <tr>
-                  <td colspan="2" style="font-size:12px;color:#777;padding-top:4px;">{{ opp.account_name }}{% if opp.stage %} &middot; {{ opp.stage }}{% endif %}</td>
-                </tr>
-              </table>
-            </td></tr>
-
-            <!-- Partner recommendations -->
-            {% for cand in opp.candidates %}
-            <tr><td style="padding:{% if loop.first %}12{% else %}6{% endif %}px 18px {% if loop.last %}6{% else %}0{% endif %}px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="{% if loop.first %}background:#f8fbff;border:1px solid #d4e5f7;{% else %}background:#fafafa;border:1px solid #eee;{% endif %}border-radius:8px;overflow:hidden;">
-                <tr>
-                  <td style="padding:10px 14px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="font-size:13px;color:#1a1a1a;font-weight:600;">
-                          {% if loop.first %}&#x1F947;{% elif loop.index == 2 %}&#x1F948;{% else %}&#x1F949;{% endif %}
-                          {{ cand.partner }}
-                        </td>
-                        <td align="right">
-                          <span style="display:inline-block;background:{{ cand.badge_bg }};color:{{ cand.badge_fg }};padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;">
-                            {{ cand.confidence }}% confidence
-                          </span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td colspan="2" style="font-size:12px;color:#666;padding-top:5px;line-height:1.5;">
-                          {{ cand.rationale_summary }}
-                        </td>
-                      </tr>
-                    </table>
+                  <td>
+                    <span style="font-size:13px;color:#333;">{{ opp.opp_name }}</span>
+                    {% if opp.stage %}<span style="font-size:11px;color:#999;padding-left:10px;">{{ opp.stage }}</span>{% endif %}
+                  </td>
+                  <td align="right" style="white-space:nowrap;">
+                    {% if opp.has_recommendation %}
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ opp.dot_color }};vertical-align:middle;margin-right:4px;"></span>
+                    <span style="font-size:12px;font-weight:600;color:{{ opp.dot_color }};">{{ opp.top_confidence }}%</span>
+                    {% else %}
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c62828;vertical-align:middle;margin-right:4px;"></span>
+                    <span style="font-size:12px;color:#c62828;">No match</span>
+                    {% endif %}
+                    {% if opp.euro_bkngs > 0 %}
+                    <span style="font-size:12px;color:#0070AD;font-weight:600;padding-left:14px;">&euro;{{ "{:,.0f}".format(opp.euro_bkngs) }}</span>
+                    {% endif %}
                   </td>
                 </tr>
               </table>
             </td></tr>
-            {% endfor %}
 
-            <!-- Actions -->
-            <tr><td style="padding:12px 18px 16px;">
-              <table cellpadding="0" cellspacing="0" style="width:100%;">
+            {% if opp.has_recommendation %}
+            <!-- Partner recommendation box -->
+            <tr><td style="padding:2px 20px 10px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fbff;border:1px solid #dce8f5;border-radius:8px;">
+                <tr><td style="padding:14px 18px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="font-size:15px;font-weight:700;color:#003366;">{{ opp.top_partner }}</td>
+                      <td align="right">
+                        <span style="display:inline-block;background:{{ opp.top_badge_bg }};color:{{ opp.top_badge_fg }};padding:3px 12px;border-radius:12px;font-size:11px;font-weight:700;">{{ opp.top_confidence }}%</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="2" style="font-size:13px;color:#444;padding-top:8px;line-height:1.6;">{{ opp.top_rationale }}</td>
+                    </tr>
+                  </table>
+                </td></tr>
+              </table>
+            </td></tr>
+
+            {% if opp.secondary %}
+            <!-- Secondary -->
+            <tr><td style="padding:0 20px 8px;">
+              <span style="font-size:12px;color:#777;">Also possible: <strong>{{ opp.secondary.partner }}</strong> ({{ opp.secondary.confidence }}%)</span>
+            </td></tr>
+            {% endif %}
+
+            <!-- Actions with recommendation -->
+            <tr><td style="padding:4px 20px 16px;">
+              <table cellpadding="0" cellspacing="0">
                 <tr>
-                  {% set top = opp.candidates[0] if opp.candidates else None %}
-                  {% if top %}
                   <td>
-                    <a href="{{ webhook_base }}/select?opp_id={{ opp.opp_id }}&partner={{ top.partner }}&token={{ opp.token }}"
-                       style="display:inline-block;background:#0070AD;color:#ffffff;padding:10px 24px;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">
-                      &#x2705; Accept {{ top.partner }}
+                    <a href="{{ webhook_base }}/select?opp_id={{ opp.opp_id }}&partner={{ opp.top_partner }}&token={{ opp.token }}"
+                       style="display:inline-block;background:#0070AD;color:#ffffff;padding:9px 22px;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">
+                      Accept {{ opp.top_partner }}
                     </a>
                   </td>
-                  {% endif %}
                   <td style="padding-left:12px;">
                     <a href="{{ webhook_base }}/suggest?opp_id={{ opp.opp_id }}&token={{ opp.token }}"
-                       style="display:inline-block;background:#ffffff;color:#0070AD;padding:10px 18px;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;border:1px solid #0070AD;">
-                      &#x270F;&#xFE0F; Suggest different
+                       style="display:inline-block;background:#ffffff;color:#0070AD;padding:9px 16px;text-decoration:none;border-radius:6px;font-size:13px;font-weight:500;border:1px solid #0070AD;">
+                      Suggest different
                     </a>
                   </td>
-                  <td align="right">
+                  <td style="padding-left:12px;">
                     <a href="{{ webhook_base }}/reject?opp_id={{ opp.opp_id }}&token={{ opp.token }}"
-                       style="font-size:12px;color:#999;text-decoration:none;">&#x274C; None apply</a>
+                       style="font-size:12px;color:#999;text-decoration:none;">None apply</a>
                   </td>
                 </tr>
               </table>
             </td></tr>
+
+            {% else %}
+            <!-- No valid partner -->
+            <tr><td style="padding:2px 20px 10px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff8f0;border:1px solid #ffd6a0;border-radius:8px;">
+                <tr><td style="padding:14px 18px;">
+                  <p style="margin:0;font-size:13px;color:#7a4900;line-height:1.6;">
+                    <strong>No confident match found.</strong> The analysis did not identify a clear partner for this opportunity.
+                    Please suggest the correct partner based on your knowledge of this deal.
+                  </p>
+                </td></tr>
+              </table>
+            </td></tr>
+
+            <!-- Actions without recommendation -->
+            <tr><td style="padding:4px 20px 16px;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <a href="{{ webhook_base }}/suggest?opp_id={{ opp.opp_id }}&token={{ opp.token }}"
+                       style="display:inline-block;background:#0070AD;color:#ffffff;padding:9px 22px;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">
+                      Suggest a partner
+                    </a>
+                  </td>
+                  <td style="padding-left:12px;">
+                    <a href="{{ webhook_base }}/reject?opp_id={{ opp.opp_id }}&token={{ opp.token }}"
+                       style="font-size:12px;color:#999;text-decoration:none;">Skip</a>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+            {% endif %}
 
           </table>
         </td></tr>
         {% endfor %}
 
+        <!-- Spacer between accounts -->
+        <tr><td style="padding:10px 0;"></td></tr>
+        {% endfor %}
+
         <!-- Footer -->
-        <tr><td style="padding:16px 28px;border-top:1px solid #eee;background:#fafbfc;">
+        <tr><td style="padding:20px 36px;border-top:1px solid #eee;background:#fafbfc;border-radius:0 0 12px 12px;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td style="font-size:11px;color:#999;line-height:1.6;">
-                &#x1F916; <strong style="color:#0070AD;">UOA</strong> &middot; Untagged Opportunity Agent<br>
-                <span style="color:#bbb;">Capgemini Sales Operations</span>
+                Automated by <strong style="color:#003366;">THOR</strong> Partner Tagging &middot; Capgemini Sales Operations
               </td>
               <td align="right" style="font-size:11px;color:#bbb;">{{ now }}</td>
             </tr>
@@ -384,8 +417,6 @@ DIGEST_TEMPLATE = """\
 </body>
 </html>
 """
-
-
 
 
 def build_digest_email(
@@ -405,34 +436,56 @@ def build_digest_email(
     Returns:
         Rendered HTML string.
     """
+    from collections import OrderedDict
     from datetime import datetime, timezone
 
     template = Template(DIGEST_TEMPLATE)
-    opp_data = []
+
+    # Group opportunities by account name (preserving order)
+    grouped: OrderedDict[str, list[dict]] = OrderedDict()
     for opp in opportunities:
-        opp_data.append({
+        top = opp.candidates[0] if opp.candidates else None
+        has_recommendation = top is not None and top.partner != "Unknown" and top.confidence > 0
+
+        if has_recommendation:
+            top_conf = round(top.confidence, 1)
+            dot_color = "#1e7e34" if top_conf >= 80 else "#b8860b" if top_conf >= 50 else "#c62828"
+            badge_bg, badge_fg = _confidence_badge(top.confidence)
+            top_rationale = _humanize_rationale(top.rationale, top.partner)
+        else:
+            top_conf = 0
+            dot_color = "#c62828"
+            badge_bg, badge_fg = "#fde7e7", "#c62828"
+            top_rationale = ""
+
+        secondary = None
+        if has_recommendation and len(opp.candidates) > 1:
+            c2 = opp.candidates[1]
+            if c2.partner != "Unknown" and c2.confidence > 10:
+                secondary = {"partner": c2.partner, "confidence": round(c2.confidence, 1)}
+
+        opp_dict = {
             "opp_id": opp.opp_id,
             "opp_name": opp.opp_name,
             "account_name": opp.account_name,
             "euro_bkngs": opp.euro_bkngs,
             "stage": opp.stage,
             "token": tokens.get(opp.opp_id, ""),
-            "candidates": [
-                {
-                    "partner": c.partner,
-                    "confidence": round(c.confidence, 1),
-                    "rationale": c.rationale,
-                    "rationale_summary": _humanize_rationale(c.rationale, c.partner),
-                    "label": _confidence_label(c.confidence),
-                    "badge_bg": _confidence_badge(c.confidence)[0],
-                    "badge_fg": _confidence_badge(c.confidence)[1],
-                }
-                for c in opp.candidates
-            ],
-        })
+            "has_recommendation": has_recommendation,
+            "top_partner": top.partner if has_recommendation else "",
+            "top_confidence": top_conf,
+            "top_rationale": top_rationale,
+            "top_badge_bg": badge_bg,
+            "top_badge_fg": badge_fg,
+            "dot_color": dot_color,
+            "secondary": secondary,
+        }
+        grouped.setdefault(opp.account_name, []).append(opp_dict)
+
     return template.render(
-        opportunities=opp_data,
+        grouped=grouped,
         webhook_base=webhook_base,
         lead_name=lead_name or "Sales Lead",
+        total_opps=len(opportunities),
         now=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     )

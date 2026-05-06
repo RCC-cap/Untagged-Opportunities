@@ -1,0 +1,8 @@
+<step title="Incoming Request" date="2026-05-04T20:36:14.072" instance="565689" url="/api/deployments/latest" method="GET" type="request" pid="834,1,30" Accept="*/*" Host="thor-api-rcc.scm.azurewebsites.net" User-Agent="AZURECLI/2.85.0 (MSI)" Accept-Encoding="gzip, deflate" Authorization="Bea..." x-ms-client-request-id="c7013365-47f8-11f1-92b8-c895ced1064f" X-ARR-LOG-ID="c7013365-47f8-11f1-92b8-c895ced1064f" CLIENT-IP="194.230.148.52:47145" X-SITE-DEPLOYMENT-ID="thor-api-rcc" WAS-DEFAULT-HOSTNAME="thor-api-rcc.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/latest" X-Client-IP="194.230.148.52" X-Client-Port="47145" >
+  <step title="DeploymentService.GetResult" date="2026-05-04T20:36:14.098" >
+    <step title="DeploymentService.GetLatestDeployment" date="2026-05-04T20:36:14.120" >
+      <step title="DeploymentManager.GetResults" date="2026-05-04T20:36:14.179" /><!-- duration: 885ms -->
+    </step><!-- duration: 981ms -->
+  </step><!-- duration: 1033ms -->
+  <step title="Outgoing response" date="2026-05-04T20:36:15.151" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 37ms -->
+</step><!-- duration: 1129ms -->

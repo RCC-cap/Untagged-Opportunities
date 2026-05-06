@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<deployment>
+  <id>6ed26d98-23cb-4de2-8db6-ec63d09a1918</id>
+  <author>N/A</author>
+  <deployer>Push-Deployer</deployer>
+  <authorEmail>N/A</authorEmail>
+  <message>Created via a push deployment</message>
+  <progress>Running oryx build...</progress>
+  <status>Building</status>
+  <statusText>Building and Deploying '6ed26d98-23cb-4de2-8db6-ec63d09a1918'.</statusText>
+  <lastSuccessEndTime />
+  <receivedTime>2026-05-06T14:50:51.9868732Z</receivedTime>
+  <startTime>2026-05-06T14:50:55.3747543Z</startTime>
+  <endTime />
+  <complete>False</complete>
+  <is_temp>False</is_temp>
+  <is_readonly>True</is_readonly>
+  <containerId>5fd6ab93c6f2</containerId>
+  <buildSummary />
+</deployment>

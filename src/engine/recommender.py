@@ -110,6 +110,7 @@ def recommend(
     keywords: list[str] | None = None,
     taxonomy_context: dict[str, Any] | None = None,
     use_llm: bool = True,
+    account_overrides: dict[str, str] | None = None,
 ) -> Recommendation:
     """Generate a ranked list of partner candidates for a single opportunity.
 
@@ -145,6 +146,25 @@ def recommend(
         keywords_by_partner = {}
     if keywords is None:
         keywords = []
+    if account_overrides is None:
+        account_overrides = {}
+
+    # ── Check account override (manual knowledge) ──────────────────────
+    account_name = str(opportunity_context.get("Account Name", "")) if opportunity_context else ""
+    override_partner = account_overrides.get(account_name)
+    if override_partner:
+        logger.info(f"Account override for {account_name} → {override_partner}")
+        return Recommendation(
+            opportunity_id=opportunity_id,
+            candidates=[
+                PartnerCandidate(
+                    partner=override_partner,
+                    confidence=95.0,
+                    rationale=f"{account_name} is transitioning to {override_partner}. Manual override applied based on current account strategy.",
+                    signals={"account_override": True},
+                )
+            ],
+        )
 
     # ── Try LLM-first ──────────────────────────────────────────────────
     if use_llm and opportunity_context:
@@ -244,5 +264,17 @@ def _deterministic_recommend(
 
     candidates.sort(key=lambda c: c.confidence, reverse=True)
     candidates = candidates[:max_candidates]
+
+    # Never return empty — provide a "no match" placeholder so the email
+    # can show a clear message asking the lead to suggest a partner.
+    if not candidates:
+        candidates = [
+            PartnerCandidate(
+                partner="Unknown",
+                confidence=0.0,
+                rationale="Insufficient signals to recommend a partner. Please suggest the correct partner based on your deal knowledge.",
+                signals={"no_signal": True},
+            )
+        ]
 
     return Recommendation(opportunity_id=opportunity_id, candidates=candidates)

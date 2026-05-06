@@ -1,0 +1,15 @@
+<step title="Incoming Request" date="2026-05-05T15:49:39.051" instance="565689" url="/api/zipdeploy?isAsync=true" method="POST" type="request" pid="834,1,60" Accept="*/*" Host="thor-api-rcc.scm.azurewebsites.net" User-Agent="AZURECLI/2.85.0 (MSI)" Accept-Encoding="gzip, deflate" Authorization="Bea..." Cache-Control="no-cache" Content-Type="application/octet-stream" Content-Length="334057" x-ms-client-request-id="f6bc3edd-4899-11f1-9775-c895ced1064f" x-ms-artifact-checksum="ab27723921b658aeed941047985e6b92179009a07e59c5780f99240d928ce941" X-ARR-LOG-ID="f6bc3edd-4899-11f1-9775-c895ced1064f" CLIENT-IP="194.146.214.100:57609" X-SITE-DEPLOYMENT-ID="thor-api-rcc" WAS-DEFAULT-HOSTNAME="thor-api-rcc.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/zipdeploy?isAsync=true" X-Client-IP="194.146.214.100" X-Client-Port="57609" >
+  <step title="ZipPushDeploy" date="2026-05-05T15:49:39.186" >
+    <step title="ZipDeploy. Extract zip. Remote build." date="2026-05-05T15:49:39.199" /><!-- duration: 5ms -->
+    <step title="Starting PushDeployAsync" date="2026-05-05T15:49:39.214" /><!-- duration: 4ms -->
+    <step title="Writing artifact to /tmp/zipdeploy/96e0878a-5b8a-49eb-bcd7-2c7ce221207a.zip" date="2026-05-05T15:49:39.243" >
+      <step title="Writing multipart request body to /tmp/zipdeploy/96e0878a-5b8a-49eb-bcd7-2c7ce221207a.zip" date="2026-05-05T15:49:39.256" /><!-- duration: 5ms -->
+    </step><!-- duration: 131ms -->
+    <step title="Removing previous build artifact&apos;s manifest file" date="2026-05-05T15:49:39.381" >
+      <step title="Start deployment in the background" date="2026-05-05T15:49:39.414" >
+        <step title="Acquiring Deployment Lock" date="2026-05-05T15:49:39.446" /><!-- duration: 11ms -->
+        <step title="Acquired Deployment Lock" date="2026-05-05T15:49:39.500" /><!-- duration: 5ms -->
+      </step><!-- duration: 190ms -->
+    </step><!-- duration: 243ms -->
+    <step title="Outgoing response" date="2026-05-05T15:49:39.672" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 4ms -->
+  </step><!-- duration: 494ms -->

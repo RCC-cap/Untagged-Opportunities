@@ -1,0 +1,15 @@
+<step title="Incoming Request" date="2026-05-04T20:51:30.163" instance="565689" url="/api/zipdeploy?isAsync=true" method="POST" type="request" pid="834,1,26" Accept="*/*" Host="thor-api-rcc.scm.azurewebsites.net" User-Agent="AZURECLI/2.85.0 (MSI)" Accept-Encoding="gzip, deflate" Authorization="Bea..." Cache-Control="no-cache" Content-Type="application/octet-stream" Content-Length="281036" x-ms-client-request-id="fbde6bb0-47fa-11f1-a4cf-c895ced1064f" x-ms-artifact-checksum="08ae933ccbcf39cc93f27ad688430b58a9bafa5bdd29f950bdeb38438cd3715c" X-ARR-LOG-ID="fbde6bb0-47fa-11f1-a4cf-c895ced1064f" CLIENT-IP="194.230.148.52:47182" X-SITE-DEPLOYMENT-ID="thor-api-rcc" WAS-DEFAULT-HOSTNAME="thor-api-rcc.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/zipdeploy?isAsync=true" X-Client-IP="194.230.148.52" X-Client-Port="47182" >
+  <step title="ZipPushDeploy" date="2026-05-04T20:51:30.309" >
+    <step title="ZipDeploy. Extract zip. Remote build." date="2026-05-04T20:51:30.339" /><!-- duration: 5ms -->
+    <step title="Starting PushDeployAsync" date="2026-05-04T20:51:30.362" /><!-- duration: 20ms -->
+    <step title="Writing artifact to /tmp/zipdeploy/bff6b686-cf84-4db4-a45a-04db940e93eb.zip" date="2026-05-04T20:51:30.465" >
+      <step title="Writing multipart request body to /tmp/zipdeploy/bff6b686-cf84-4db4-a45a-04db940e93eb.zip" date="2026-05-04T20:51:30.470" /><!-- duration: 4ms -->
+    </step><!-- duration: 102ms -->
+    <step title="Removing previous build artifact&apos;s manifest file" date="2026-05-04T20:51:30.574" >
+      <step title="Start deployment in the background" date="2026-05-04T20:51:30.639" >
+        <step title="Acquiring Deployment Lock" date="2026-05-04T20:51:30.710" /><!-- duration: 11ms -->
+        <step title="Acquired Deployment Lock" date="2026-05-04T20:51:30.760" /><!-- duration: 6ms -->
+      </step><!-- duration: 328ms -->
+    </step><!-- duration: 409ms -->
+    <step title="Outgoing response" date="2026-05-04T20:51:30.992" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 10ms -->
+  </step><!-- duration: 698ms -->

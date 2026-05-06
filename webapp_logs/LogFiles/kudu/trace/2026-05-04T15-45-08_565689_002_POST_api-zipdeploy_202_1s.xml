@@ -1,0 +1,17 @@
+<step title="Incoming Request" date="2026-05-04T15:45:08.160" instance="565689" url="/api/zipdeploy?isAsync=true" method="POST" type="request" pid="832,1,5" Accept="*/*" Host="thor-api-rcc.scm.azurewebsites.net" User-Agent="AZURECLI/2.85.0 (MSI)" Accept-Encoding="gzip, deflate" Authorization="Bea..." Cache-Control="no-cache" Content-Type="application/octet-stream" Content-Length="270464" x-ms-client-request-id="1b5364a9-47d0-11f1-8ddc-c895ced1064f" x-ms-artifact-checksum="38f476debdef0eea25a7b67721ae2720de7777a21e76f77a27bc24ba2cc68331" X-ARR-LOG-ID="1b5364a9-47d0-11f1-8ddc-c895ced1064f" CLIENT-IP="198.184.231.184:56671" X-SITE-DEPLOYMENT-ID="thor-api-rcc" WAS-DEFAULT-HOSTNAME="thor-api-rcc.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/zipdeploy?isAsync=true" X-Client-IP="198.184.231.184" X-Client-Port="56671" >
+  <step title="ZipPushDeploy" date="2026-05-04T15:45:08.882" >
+    <step title="ZipDeploy. Extract zip. Remote build." date="2026-05-04T15:45:08.894" /><!-- duration: 4ms -->
+    <step title="None repository commit" date="2026-05-04T15:45:08.904" >
+      <step title="Commit id: c0985f95-baf7-4413-8325-a6a5ddfdf19d" date="2026-05-04T15:45:08.908" Message="N/A" AuthorName="N/A" AuthorEmail="N/A" /><!-- duration: 3ms -->
+    </step><!-- duration: 10ms -->
+    <step title="Starting PushDeployAsync" date="2026-05-04T15:45:08.918" /><!-- duration: 3ms -->
+    <step title="Writing artifact to /tmp/zipdeploy/f566ab93-399e-41e8-b387-2ccb3079db12.zip" date="2026-05-04T15:45:08.936" >
+      <step title="Writing multipart request body to /tmp/zipdeploy/f566ab93-399e-41e8-b387-2ccb3079db12.zip" date="2026-05-04T15:45:08.940" /><!-- duration: 3ms -->
+    </step><!-- duration: 95ms -->
+    <step title="Start deployment in the background" date="2026-05-04T15:45:09.053" >
+      <step title="Acquiring Deployment Lock" date="2026-05-04T15:45:09.093" /><!-- duration: 4ms -->
+      <step title="Acquired Deployment Lock" date="2026-05-04T15:45:09.228" /><!-- duration: 12ms -->
+    </step><!-- duration: 276ms -->
+  </step><!-- duration: 453ms -->
+  <step title="Outgoing response" date="2026-05-04T15:45:09.363" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 40ms -->
+</step><!-- duration: 1246ms -->

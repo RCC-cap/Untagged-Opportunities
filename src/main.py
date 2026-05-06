@@ -119,6 +119,7 @@ def run_pipeline(
     # ── Step 5: Load taxonomy ───────────────────────────────────────────
     taxonomy = load_taxonomy()
     min_deals = settings["scoring"]["min_deals_for_boost"]
+    account_overrides = settings.get("account_overrides", {})
 
     # ── Step 6: Process in batches ──────────────────────────────────────
     total_to_process = min(untagged_df.height, batch_size * max_batches)
@@ -179,6 +180,7 @@ def run_pipeline(
                 keywords=keywords,
                 taxonomy_context=taxonomy,
                 use_llm=use_llm,
+                account_overrides=account_overrides,
             )
 
             # Track LLM usage
@@ -262,7 +264,9 @@ def run_pipeline(
     if dry_run:
         logger.info(f"DRY RUN — saved {len(digests)} email preview(s) to data/email_previews/")
     else:
-        logger.info(f"Generated {len(digests)} digest email(s) — included in response for n8n to send")
+        logger.info(f"Sending {len(digests)} digest email(s) via Power Automate webhook...")
+        sent_ok = _send_via_power_automate(digests)
+        logger.info(f"Emails sent successfully: {sent_ok}/{len(digests)}")
 
     return {
         "processed": processed_count,
@@ -271,8 +275,46 @@ def run_pipeline(
         "emails_sent": len(digests),
         "llm_calls": llm_calls,
         "llm_fallbacks": llm_fallbacks,
-        "digests": digests,
+        "digests": digests if dry_run else [{"to": d["to"], "opp_count": d["opp_count"]} for d in digests],
     }
+
+
+# ── DEMO HARD-CODE: send all emails to this address ─────────────────────
+_DEMO_RECIPIENT = "riccardo-carlo.conte@capgemini.com"
+
+_POWER_AUTOMATE_URL = (
+    "https://default76a2ae5a9f004f6b95ed5d33d77c4d.61.environment.api.powerplatform.com:443"
+    "/powerautomate/automations/direct/workflows/5f62b45d4f03437dbf536a9250941547"
+    "/triggers/manual/paths/invoke?api-version=1"
+    "&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0"
+    "&sig=V0HHXpj6ofQVNjrniLZ76YPP8U7ARdiM1XrjcUIt1Pk"
+)
+
+
+def _send_via_power_automate(digests: list[dict]) -> int:
+    """POST each digest to Power Automate webhook which sends via Office 365 Outlook.
+
+    DEMO MODE: overrides recipient to _DEMO_RECIPIENT.
+    """
+    import httpx
+
+    sent = 0
+    for digest in digests:
+        payload = {
+            "recipient": _DEMO_RECIPIENT,
+            "subject": digest["subject"],
+            "Body": digest["html"],
+        }
+        try:
+            resp = httpx.post(_POWER_AUTOMATE_URL, json=payload, timeout=30)
+            if resp.status_code < 300:
+                logger.info(f"Email sent to {_DEMO_RECIPIENT} ({digest['opp_count']} opps)")
+                sent += 1
+            else:
+                logger.error(f"Power Automate returned {resp.status_code}: {resp.text[:200]}")
+        except Exception as e:
+            logger.error(f"Failed to send email: {e}")
+    return sent
 
 
 def _score_offer_match(row: dict, taxonomy: dict) -> dict[str, float]:
