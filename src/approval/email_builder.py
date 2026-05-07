@@ -239,109 +239,113 @@ def build_approval_email(
 
 DIGEST_TEMPLATE = """\
 <!DOCTYPE html>
-<html>
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!--[if mso]><style>td,th,p,span,a{font-family:Arial,sans-serif!important;font-size:14px!important}</style><![endif]-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Review Email</title>
+    <!--[if mso]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+    </xml>
+    <![endif]-->
+    <style>
+        body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; background-color: #f4f4f4; font-family: Arial, sans-serif; }
+        table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+    </style>
 </head>
-<body style="margin:0;padding:0;background:#eef2f6;font-family:'Segoe UI',Roboto,Arial,sans-serif;font-size:14px;color:#24292f;-webkit-text-size-adjust:100%;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f6;padding:34px 16px;">
-    <tr><td align="center">
-      <table width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:22px;overflow:hidden;box-shadow:0 24px 60px rgba(15,56,91,0.10);">
-
-        <tr>
-          <td style="background:#355c8a;padding:0;color:#ffffff;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#5f7896 0%,#355c8a 46%,#2a5aa6 100%);">
-              <tr>
-                <td style="padding:26px 34px 14px;">
-                  <div style="font-size:13px;font-weight:700;letter-spacing:0.02em;color:#ffffff;">Capgemini</div>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:0 34px 8px;">
-                  <div style="font-size:18px;line-height:1.35;color:#7ce3ff;">Thor Partner Tagging Agent</div>
-                  <div style="margin-top:10px;font-size:30px;line-height:1.2;font-weight:700;max-width:470px;color:#ffffff;">
-                    Review partner recommendations in your browser workspace
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:10px 34px 0;">
-                  <div style="height:12px;background:#19d6df;width:72%;max-width:420px;"></div>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:18px 34px 26px;font-size:14px;line-height:1.7;color:rgba(255,255,255,0.92);">
-                  Hi {{ lead_name }}, you are identified as <strong>Opty Lead</strong> for <strong>{{ total_opps_word }}</strong>
-                  opportunit{{ 'y' if total_opps == 1 else 'ies' }} requiring partner review.
-                  {% if total_booking > 0 %}Total pipeline value: <strong>&euro;{{ "{:,.0f}".format(total_booking) }}</strong>.{% endif %}
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        <tr>
-          <td style="padding:30px 34px 34px;">
-            <p style="margin:0;font-size:15px;line-height:1.7;color:#334150;">
-              This email asks you to validate partner-tag recommendations generated for opportunities in your scope.
-              Your input is needed to confirm the right partner, correct weak matches, or add context that the model cannot infer from the source data alone.
-            </p>
-
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:22px;background:#f5f9fc;border:1px solid #dbe8f0;border-radius:16px;">
-              <tr>
-                <td style="padding:18px 20px;font-size:13px;line-height:1.7;color:#52606d;">
-                  <strong style="color:#1d2733;">Why your input matters</strong><br>
-                  The browser workspace lets you confirm the best-fit partner, adjust suggestions when needed,
-                  and add comments that improve traceability and future recommendations.
-                </td>
-              </tr>
-            </table>
-
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;">
-              <tr>
+<body>
+    <center>
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#f4f4f4">
+            <tr>
                 <td align="center">
-                  <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
-                    <tr>
-                      <td align="center" bgcolor="#1378b5" style="border-radius:999px;background:#1378b5;box-shadow:0 12px 28px rgba(19,120,181,0.22);">
-                        <a href="{{ browser_link }}"
-                           style="display:inline-block;background:#1378b5;color:#ffffff;text-decoration:none;padding:16px 32px;border-radius:999px;font-size:16px;font-weight:700;letter-spacing:0.01em;border:1px solid #1378b5;">
-                          Open Browser Review Workspace
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
+                    <!-- Main Container -->
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" bgcolor="#ffffff" style="max-width:600px;">
+
+                        <!-- Header Section -->
+                        <tr>
+                            <td bgcolor="#3b6691" style="padding: 40px 40px 20px 40px;">
+                                <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: bold;">Capgemini</p>
+                                <p style="color: #a0c4ff; margin: 5px 0 20px 0; font-size: 16px;">Thor Partner Tagging Agent</p>
+                                <h1 style="color: #ffffff; margin: 0; font-size: 28px; line-height: 1.2;">Review partner recommendations in your browser workspace</h1>
+                            </td>
+                        </tr>
+
+                        <!-- Pipeline Status Bar -->
+                        <tr>
+                            <td bgcolor="#2c4a6b" style="padding: 15px 40px;">
+                                <p style="color: #ffffff; margin: 0; font-size: 14px;">
+                                    Hi {{ lead_name }}, you are identified as <strong>Opty Lead</strong> for <strong>{{ total_opps_word }} opportunit{{ 'y' if total_opps == 1 else 'ies' }}</strong> requiring partner review.
+                                    {% if total_booking > 0 %}<br>Total pipeline value: <strong>&euro;{{ "{:,.0f}".format(total_booking) }}</strong>{% endif %}
+                                </p>
+                            </td>
+                        </tr>
+
+                        <!-- Main Body Content -->
+                        <tr>
+                            <td style="padding: 40px;">
+                                <p style="color: #333333; font-size: 16px; line-height: 1.5; margin: 0 0 20px 0;">
+                                    This email asks you to validate partner-tag recommendations generated for opportunities in your scope. Your input is needed to confirm the right partner, correct weak matches, or add context that the model cannot infer from the source data alone.
+                                </p>
+
+                                <!-- Info Block 1 -->
+                                <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f0f7ff" style="border-radius: 4px;">
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <p style="margin: 0 0 10px 0; font-weight: bold; color: #333333;">Why your input matters</p>
+                                            <p style="margin: 0; font-size: 14px; color: #555555; line-height: 1.4;">The browser workspace lets you confirm the best-fit partner, adjust suggestions when needed, and add comments that improve traceability.</p>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <!-- CTA Button -->
+                                <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td align="center" style="padding: 30px 0;">
+                                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
+                                                <tr>
+                                                    <td align="center" bgcolor="#0070ad" style="border-radius: 4px;">
+                                                        <a href="{{ browser_link }}" target="_blank" style="font-size: 18px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 4px; border: 1px solid #0070ad; display: inline-block; font-weight: bold;">Open Browser Review Workspace</a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <!-- Info Block 2 -->
+                                <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f0f7ff" style="border-radius: 4px;">
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <p style="margin: 0 0 10px 0; font-weight: bold; color: #333333;">Why open it in browser?</p>
+                                            <p style="margin: 0; font-size: 14px; color: #555555; line-height: 1.4;">You will see the full review workspace with better rendering, cleaner partner recommendations, and direct action buttons for accept, suggest different, and add comment.</p>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                            </td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                            <td style="padding: 20px 40px; border-top: 1px solid #e0e0e0;">
+                                <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td style="font-size: 12px; color: #888888;">Powered by Capgemini Alliance Team &amp; Invent Switzerland</td>
+                                        <td align="right" style="font-size: 12px; color: #888888;">{{ now }}</td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                    </table>
                 </td>
-              </tr>
-            </table>
-
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#f7fafc;border:1px solid #dce6ee;border-radius:16px;">
-              <tr>
-                <td style="padding:16px 18px;font-size:13px;line-height:1.7;color:#52606d;">
-                  <strong style="color:#1d2733;">Why open it in browser?</strong><br>
-                  You will see the full review workspace with better rendering, cleaner partner recommendations,
-                  and direct action buttons for accept, suggest different, and add comment.
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        <tr>
-          <td style="padding:18px 32px;border-top:1px solid #e1e4e8;background:#fbfdff;">
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="font-size:12px;color:#8b949e;">Powered by Capgemini Alliance Team &amp; Invent Switzerland</td>
-                <td align="right" style="font-size:12px;color:#8b949e;">{{ now }}</td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-      </table>
-    </td></tr>
-  </table>
+            </tr>
+        </table>
+    </center>
 </body>
 </html>
 """
