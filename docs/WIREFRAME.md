@@ -1,5 +1,7 @@
 # THOR — Wireframe & User Flow Diagrams
 
+**Version:** 1.1 — Updated 2026-05-07 (reflects deployed Phase 1 implementation)
+
 ## 1. System Architecture Flow (End-to-End)
 
 ```
@@ -9,9 +11,10 @@
 
  ┌──────────┐    ┌──────────┐    ┌───────────────┐    ┌──────────────┐
  │  TRIGGER │───▶│  EXTRACT │───▶│    FILTER     │───▶│    BATCH     │
- │ Cron 10AM│    │SharePoint│    │ Untagged only │    │ 50 rows/call │
- └──────────┘    │ .xlsm    │    │ Skip processed│    └──────┬───────┘
-                 └──────────┘    └───────────────┘           │
+ │ POST     │    │ Azure    │    │ Untagged only │    │ 6 rows/call  │
+ │ /api/run │    │ Blob     │    │ Skip processed│    │ (test mode)  │
+ │ or Cron  │    │ .xlsx    │    │ via Cosmos DB │    └──────┬───────┘
+ └──────────┘    └──────────┘    └───────────────┘           │
                                                              ▼
                                                  ┌───────────────────────┐
                                                  │   AI RECOMMENDATION   │
@@ -19,51 +22,79 @@
                                                  │  1. Keyword Extract   │
                                                  │  2. Taxonomy Map      │
                                                  │  3. Similarity Score  │
-                                                 │  4. Partner Match     │
-                                                 │  5. Confidence Calc   │
+                                                 │  4. Account History   │
+                                                 │  5. LLM Reasoning     │
+                                                 │  6. Confidence Calc   │
                                                  └───────────┬───────────┘
                                                              │
+                                                  ┌──────────┴──────────┐
+                                                  │  Match found?       │
+                                                  └──────────┬──────────┘
+                                                  YES        │         NO
                                           ┌──────────────────┴──────────────────┐
-                                          │                                     │
                                           ▼                                     ▼
                                   ┌──────────────┐                     ┌──────────────┐
-                                  │  ALL opps    │     │  CONF ≥ 90%  │
-                                  │  (any conf.) │     │  (future)    │
-                                  │              │     │              │
-                                  │ Send Email   │     │ Auto-Approve │
-                                  │ to Sales Lead│     │ (write tag)  │
-                                  │ with score + │     │              │
-                                  │ rationale    │     │              │
-                                  └──────┬───────┘     └──────┬───────┘
-                                         │                    │
-                                         ▼                    │
-                                ┌────────────────┐            │
-                                │  SALES LEAD    │            │
-                                │  Opens Email   │            │
-                                │                │            │
-                                │ 🟢/🟡/🔴 conf │            │
-                                │ + rationale    │            │
-                                │                │            │
-                                │ ┌────┐ ┌────┐  │            │
-                                │ │ ✅ │ │ ❌ │  │            │
-                                │ └──┬─┘ └──┬─┘  │            │
-                                └────┼──────┼────┘            │
-                                     │      │                 │
-                        ┌────────────┘      └────────┐        │
-                        ▼                            ▼        │
-                ┌──────────────┐            ┌────────────┐    │
-                │   ACCEPT     │            │   REJECT   │    │
-                │              │            │            │    │
-                │ Write tag    │            │ Flag for   │    │
-                │ to dataset   │◀───────────│ manual     │    │
-                └──────┬───────┘     │      └─────┬──────┘    │
-                       │             │            │           │
-                       ▼             │            ▼           ▼
+                                  │  INTERNAL    │                     │ THOR AGENT   │
+                                  │  MATCH       │                     │ WEB FALLBACK │
+                                  │              │                     │              │
+                                  │ Partner +    │                     │ Azure OpenAI │
+                                  │ 50-100%      │                     │ researches   │
+                                  │ confidence   │                     │ public info  │
+                                  └──────┬───────┘                     │ → partner +  │
+                                         │                             │ 15-45% conf  │
+                                         │                             └──────┬───────┘
+                                         │                                    │
+                                         └──────────────┬─────────────────────┘
+                                                        ▼
+                                  ┌──────────────────────────────────────────┐
+                                  │         BUILD DIGEST EMAIL               │
+                                  │                                          │
+                                  │  Group by Sales Lead → by Account Name   │
+                                  │  Render cards: Internal / AI / No match  │
+                                  │  Include confidence badge + rationale    │
+                                  │  "View in browser" tip for Outlook       │
+                                  └────────────────────┬─────────────────────┘
+                                                       │
+                                                       ▼
+                                              ┌────────────────┐
+                                              │  Power Automate│
+                                              │  Webhook       │
+                                              │  → Outlook     │
+                                              └────────┬───────┘
+                                                       │
+                                                       ▼
+                                              ┌────────────────┐
+                                              │  SALES LEAD    │
+                                              │  Opens Email   │
+                                              │                │
+                                              │ 3 card types:  │
+                                              │ • Internal 🟢🟡│
+                                              │ • AI Sugg. 🟠  │
+                                              │ • No match 🔴  │
+                                              └──┬─────┬────┬──┘
+                                                 │     │    │
+                                   ┌─────────────┘     │    └──────────────┐
+                                   ▼                   ▼                   ▼
+                           ┌────────────┐      ┌────────────┐      ┌────────────┐
+                           │   ACCEPT   │      │  SUGGEST   │      │    SKIP    │
+                           │            │      │  DIFFERENT │      │  (Reject)  │
+                           │ Write tag  │      │            │      │            │
+                           │ to Cosmos  │      │ Web form → │      │ Flag for   │
+                           │ + Blob     │      │ user types │      │ manual     │
+                           └──────┬─────┘      │ partner +  │      └─────┬──────┘
+                                  │            │ rationale  │            │
+                                  │            └──────┬─────┘            │
+                                  │                   │                  │
+                                  └───────────────────┼──────────────────┘
+                                                      ▼
                                   ┌─────────────────────────────────────────────┐
-                                  │              AUDIT LOG (JSONL)               │
+                                  │           PERSISTENCE LAYER                  │
                                   │                                             │
-                                  │  {opp_id, partner, decision, confidence,    │
-                                  │   rationale, reviewer, timestamp, method}   │
+                                  │  ┌─────────┐  ┌──────────┐  ┌───────────┐  │
+                                  │  │Cosmos DB │  │ Blob     │  │ JSONL     │  │
+                                  │  │pipeline- │  │decisions/│  │ audit log │  │
+                                  │  │state     │  │          │  │           │  │
+                                  │  └─────────┘  └──────────┘  └───────────┘  │
                                   └─────────────────────────────────────────────┘
 ```
 
@@ -90,96 +121,136 @@
 
 ---
 
-## 3. Email Wireframe (Low-Fidelity)
+## 3. Email Wireframe — Digest Email (Implemented)
 
-### 3.1 Recommendation Email — Multi-Partner Choice
+### 3.1 Digest Email — One per Sales Lead, Grouped by Account
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ From: thor-agent@company.com                                    │
+│ From: Power Automate (thor-agent@company.com)                   │
 │ To: mario.rossi@company.com                                     │
-│ Subject: THOR — Partner Tag Recommendation for Review           │
+│ Subject: THOR — 6 Partner Tag Recommendations for Review        │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  ╔═══════════════════════════════════════════════════════════╗   │
-│  ║  THOR — Partner Tag Recommendation            [LOGO]     ║   │
-│  ╚═══════════════════════════════════════════════════════════╝   │
+│  THOR                          Partner Tag Recommendations      │
+│  ────────────────────────────────────────────────────────────   │
 │                                                                 │
-│  The following opportunity needs a partner tag:                  │
+│  💡 For best viewing experience, open this email in             │
+│     your browser.                                               │
 │                                                                 │
-│  ┌─────────────────────┬──────────────────────────────────┐     │
-│  │ Opportunity ID      │ OPP-2026-045821                  │     │
-│  │ Opportunity Name    │ Cloud Migration — Contoso AG     │     │
-│  │ Account             │ Contoso AG                       │     │
-│  │ Technology          │ Cloud Infrastructure             │     │
-│  │ Offer               │ Azure Migration                  │     │
-│  └─────────────────────┴──────────────────────────────────┘     │
+│  Hi Mario,                                                      │
 │                                                                 │
-│  Based on keyword analysis, account history, and taxonomy       │
-│  mapping, here are the recommended partners:                    │
+│  6 opportunities in your pipeline need a partner tag.           │
+│  Below are AI-generated recommendations based on account        │
+│  history, technology signals, and taxonomy matching.             │
 │                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  #1  MICROSOFT                              🟢 82%       │   │
-│  │                                                          │   │
-│  │  Keywords: "azure migration", "fabric"                   │   │
-│  │  Offer match: Azure Migration (exact)                    │   │
-│  │  Account history: 10 prior Microsoft deals               │   │
-│  │                                                          │   │
-│  │  ┌──────────────────────────┐                            │   │
-│  │  │  ✅ SELECT MICROSOFT     │                            │   │
-│  │  └──────────────────────────┘                            │   │
-│  ├──────────────────────────────────────────────────────────┤   │
-│  │  #2  AWS                                    🟡 54%       │   │
-│  │                                                          │   │
-│  │  Keywords: "cloud migration" (generic)                   │   │
-│  │  Account history: 2 prior AWS deals                      │   │
-│  │                                                          │   │
-│  │  ┌──────────────────────────┐                            │   │
-│  │  │  ✅ SELECT AWS            │                            │   │
-│  │  └──────────────────────────┘                            │   │
-│  ├──────────────────────────────────────────────────────────┤   │
-│  │  #3  GOOGLE                                 🔴 21%       │   │
-│  │                                                          │   │
-│  │  Keywords: "cloud" only — weak/generic signal            │   │
-│  │  No account history                                      │   │
-│  │                                                          │   │
-│  │  ┌──────────────────────────┐                            │   │
-│  │  │  ✅ SELECT GOOGLE         │                            │   │
-│  │  └──────────────────────────┘                            │   │
-│  └──────────────────────────────────────────────────────────┘   │
+│  🟢 80%+ High   🟡 50-79% Medium   🔴 <50% Low                │
 │                                                                 │
-│  None of these?                                                 │
-│  ┌──────────────────────────┐                                   │
-│  │  ❌ REJECT ALL            │                                   │
-│  └──────────────────────────┘                                   │
+│  ══════════════════════════════════════════════════════════════  │
+│  ROCHE HOLDING AG                                               │
+│  ══════════════════════════════════════════════════════════════  │
 │                                                                 │
-│  ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─    │
-│  This is an automated recommendation from the THOR Agentic     │
-│  Partner Tagging system. Do not reply to this email.            │
-│  Recommendation ID: REC-2026-045821-001                         │
+│  ┌──── CARD TYPE 1: INTERNAL MATCH ───────────────────────┐    │
+│  │▌                                                       │    │
+│  │▌ Cloud Transformation — Roche           Stage   [95%]  │    │
+│  │▌                                                       │    │
+│  │▌  Microsoft                                            │    │
+│  │▌  Why: this account was previously tagged with         │    │
+│  │▌  Microsoft (account override — 95% confidence).       │    │
+│  │▌                                                       │    │
+│  │▌  [Accept]  [Suggest different]  Skip                  │    │
+│  │▌                                                       │    │
+│  │▌  €1,200,000 booking value                             │    │
+│  └────────────────────────────────────────────────────────┘    │
+│                                                                 │
+│  ══════════════════════════════════════════════════════════════  │
+│  GSK | BE                                                       │
+│  ══════════════════════════════════════════════════════════════  │
+│                                                                 │
+│  ┌──── CARD TYPE 2: THOR AGENT SUGGESTION ────────────────┐    │
+│  │▌                                                       │    │
+│  │▌ Digital Workplace Modernization       Stage [AI 35%]  │    │
+│  │▌                                                       │    │
+│  │▌  Microsoft        THOR AGENT SUGGESTION               │    │
+│  │▌  No specific match found in internal data — THOR      │    │
+│  │▌  Agent suggests an alternative based on public info:  │    │
+│  │▌  GSK has a known multi-year partnership with          │    │
+│  │▌  Microsoft for cloud and digital workplace            │    │
+│  │▌  transformation across its global operations.         │    │
+│  │▌                                                       │    │
+│  │▌  [Accept Microsoft]  [Suggest different]  Skip        │    │
+│  └────────────────────────────────────────────────────────┘    │
+│                                                                 │
+│  ┌──── CARD TYPE 3: NO MATCH ─────────────────────────────┐    │
+│  │▌                                                       │    │
+│  │▌ Procurement Services — GSK           Stage [No match] │    │
+│  │▌                                                       │    │
+│  │▌  No confident partner match found. Please suggest     │    │
+│  │▌  the correct partner below.                           │    │
+│  │▌                                                       │    │
+│  │▌  [Suggest a partner]  Skip                            │    │
+│  └────────────────────────────────────────────────────────┘    │
+│                                                                 │
+│  ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──    │
+│  THOR Partner Tagging · Capgemini Sales Operations              │
+│                                          2026-05-07 10:15 UTC   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Confirmation Page (After Partner Selection)
+### 3.2 Card Types — Visual Guide
 
+| Card Type | Left Border | Badge | Condition |
+|-----------|-------------|-------|-----------|
+| **Internal Match** | Green (#1e7e34) | `95%` green badge | Keyword/taxonomy/history match found |
+| **THOR Agent Suggestion** | Amber (#b8860b) | `AI 35%` amber badge | No internal match; LLM identified likely partner from public info |
+| **No Match** | Red (#c62828) | `No match` red badge | Neither internal nor LLM could identify a partner |
+
+### 3.3 Suggest Partner Form (Web Page)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│  ╔═══════════════════════════════════════════════════════════╗   │
+│  ║  📝 Suggest a Different Partner                          ║   │
+│  ║  None of THOR's recommendations fit? Tell us the correct ║   │
+│  ║  partner.                                                ║   │
+│  ╚═══════════════════════════════════════════════════════════╝   │
+│                                                                 │
+│   Opportunity: OPP-2026-045821                                  │
+│                                                                 │
+│   Partner Name                                                  │
+│   ┌──────────────────────────────────────────────────────┐     │
+│   │ e.g. Microsoft, AWS, SAP, ServiceNow...              │     │
+│   └──────────────────────────────────────────────────────┘     │
+│   Type the partner that should be tagged for this opportunity.  │
+│                                                                 │
+│   ┌──────────────────────────────────────────────────────┐     │
+│   │          ✓ Submit Suggestion                         │     │
+│   └──────────────────────────────────────────────────────┘     │
+│                                                                 │
+│  ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──    │
+│  Your suggestion will be recorded and the partner tag applied   │
+│  to this opportunity. THOR learns from your feedback.           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 3.4 Confirmation Pages
+
+**After Accept:**
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                                                                 │
 │                    ✅ Tag Applied Successfully                   │
 │                                                                 │
-│  Partner tag "Microsoft" has been applied to:                   │
-│                                                                 │
-│  • Opportunity: OPP-2026-045821                                 │
-│  • Account: Contoso AG                                          │
-│  • Recorded at: 2026-05-03 14:32:01 UTC                         │
+│  Partner tag "Microsoft" has been applied to opportunity         │
+│  OPP-2026-045821.                                               │
 │                                                                 │
 │  You may close this window.                                     │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 3.3 Confirmation Page (After Reject All)
-
+**After Skip (Reject):**
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                                                                 │
@@ -189,7 +260,19 @@
 │  This opportunity has been flagged for manual review             │
 │  by Sales Operations.                                           │
 │                                                                 │
-│  Recorded at: 2026-05-03 14:32:01 UTC                           │
+│  You may close this window.                                     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**After Already Responded (idempotent):**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                    ℹ️ Already Responded                          │
+│                                                                 │
+│  This opportunity was previously tagged as "Microsoft".         │
+│  No further action needed.                                      │
 │                                                                 │
 │  You may close this window.                                     │
 │                                                                 │
@@ -370,26 +453,41 @@
               ┌──────────────────────────────┐
               │                              │
               │    RECOMMENDATION GENERATED  │
-              │    (confidence 0–100)        │
+              │                              │
+              │    3 possible outcomes:      │
+              │    • Internal match (50-100%)│
+              │    • THOR Agent sugg (15-45%)│
+              │    • No match (0%)          │
               │                              │
               └──────────────┬───────────────┘
                              │
-                             │ Email ALWAYS sent to Sales Lead
-                             │ (with 🟢/🟡/🔴 label + rationale)
+                             │ Digest email sent to Sales Lead
+                             │ (grouped by account, with confidence badges)
                              ▼
                     ┌──────────────────┐
                     │                  │
                     │  PENDING_REVIEW  │ ── Email in Sales Lead's inbox
                     │                  │
-                    └────┬────────┬────┘
-                         │        │
-              Accept     │        │  Reject
-                         ▼        ▼
-              ┌────────────┐  ┌────────────┐
-              │            │  │            │
-              │   TAGGED   │  │  REJECTED  │
-              │            │  │  (flagged) │
-              └────────────┘  └────────────┘
+                    └──┬─────┬─────┬──┘
+                       │     │     │
+            Accept     │     │     │  Skip
+                       │     │     │
+                       ▼     │     ▼
+              ┌──────────┐   │   ┌────────────┐
+              │          │   │   │            │
+              │  TAGGED  │   │   │  REJECTED  │
+              │          │   │   │  (flagged) │
+              └──────────┘   │   └────────────┘
+                             │
+                    Suggest   │
+                   different  │
+                             ▼
+                    ┌──────────────────┐
+                    │                  │
+                    │  SUGGESTED       │ ── Sales Lead typed
+                    │  (user-tagged)   │    a different partner
+                    │                  │
+                    └──────────────────┘
                                     │
                                     │ Manual review
                                     ▼
@@ -449,21 +547,37 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                              src/ modules                                │
-├────────────────┬────────────────────────────────────────────────────────┤
-│  Module        │  Responsibility                                        │
-├────────────────┼────────────────────────────────────────────────────────┤
-│  extract/      │  Connect to SharePoint, download .xlsm, parse to DF   │
-│  parse/        │  Read .xlsm sheets, handle VBA macros, normalize cols  │
-│  filter/       │  Select untagged rows, exclude already-processed       │
-│  engine/       │  Core AI logic: keywords, taxonomy, similarity, score  │
-│  approval/     │  Build HTML emails, handle webhook Accept/Reject       │
-│  update/       │  Write partner tag back to dataset                     │
-│  audit/        │  Append JSONL audit records for every action           │
-├────────────────┼────────────────────────────────────────────────────────┤
-│  config/       │  YAML settings, partner weights, JSON taxonomy rules   │
-│  workflows/    │  n8n workflow definition (schedule + orchestration)     │
-│  tests/        │  Unit + integration tests                              │
-└────────────────┴────────────────────────────────────────────────────────┘
+├─────────────────┬───────────────────────────────────────────────────────┤
+│  Module         │  Responsibility                                       │
+├─────────────────┼───────────────────────────────────────────────────────┤
+│  api.py         │  FastAPI app: /health, /api/run, /api/select,        │
+│                 │  /api/reject, /api/suggest (GET+POST)                 │
+│  main.py        │  Pipeline orchestrator: extract→filter→recommend→    │
+│                 │  web_fallback→email→persist                           │
+├─────────────────┼───────────────────────────────────────────────────────┤
+│  extract/       │  blob_reader: download .xlsx from Azure Blob         │
+│                 │  blob_writer: persist decisions + audit to Blob       │
+│  parse/         │  xls_parser: read .xlsx with Polars/calamine         │
+│  filter/        │  Select untagged rows, exclude already-processed      │
+│  engine/        │  Core AI logic:                                       │
+│                 │  · keyword_extractor: extract meaningful terms        │
+│                 │  · taxonomy_mapper: match keywords to partner rules   │
+│                 │  · similarity_scorer: TF-IDF cosine similarity        │
+│                 │  · account_history: prior tagged deals scoring        │
+│                 │  · llm_reasoner: Azure OpenAI reasoning               │
+│                 │  · recommender: orchestrate signals → candidates      │
+│                 │  · web_fallback: LLM research for no-match cases     │
+│  approval/      │  email_builder: Jinja2 digest/single email HTML      │
+│                 │  token_utils: HMAC-SHA256 token generation/verify     │
+│                 │  webhook_handler: process Accept/Reject/Suggest       │
+│  store/         │  state_manager: Cosmos DB state (processed, responses)│
+│  update/        │  dataset_updater: write-back to source (future)       │
+│  audit/         │  audit_logger: append-only JSONL audit trail          │
+├─────────────────┼───────────────────────────────────────────────────────┤
+│  config/        │  settings.yaml, partners.yaml, taxonomy.json          │
+│  workflows/     │  n8n workflow definition (schedule + HTTP trigger)     │
+│  tests/         │  Unit + integration tests                             │
+└─────────────────┴───────────────────────────────────────────────────────┘
 ```
 
 ---

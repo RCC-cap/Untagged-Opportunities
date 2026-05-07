@@ -5,9 +5,9 @@
 | Field | Value |
 |-------|-------|
 | **Owner** | Riccardo Carlo Conte |
-| **Version** | 1.0 |
-| **Date** | 2026-05-03 |
-| **Status** | Phase 1 — In Development |
+| **Version** | 1.1 |
+| **Date** | 2026-05-07 |
+| **Status** | Phase 1 — Deployed & Live |
 | **Repo** | `RCC-cap/Untagged-Opportunities` |
 
 ---
@@ -41,14 +41,19 @@ THOR Agentic Partner Tagging is a **backend-only autonomous agent** that analyse
 | F2 | **Filter Untagged** | Identify rows where Partner = "No Vendor/Partner", "-", or blank; skip already-processed |
 | F3 | **AI Recommendation Engine** | Per opportunity: keyword extraction → taxonomy mapping → similarity scoring → generate **ranked list of candidate partners** each with individual confidence score (0–100) and rationale |
 | F4 | **Hyperscaler Priority Weighting** | Tier-1 partners (Microsoft, SAP, AWS, Oracle, Google) receive configurable priority boost in scoring |
-| F5 | **Multi-Partner Choice Email** | HTML email to Sales Lead showing opportunity details + **ranked partner list** with per-partner confidence score and rationale. Sales Lead clicks the partner they want to assign (one-click selection) or Reject All |
+| F5 | **Multi-Partner Digest Email** | Single digest email per Sales Lead grouping ALL their untagged opportunities by account. Each opp shows ranked partner candidates with per-partner confidence score, rationale, and action buttons (Accept / Suggest Different / Skip). Includes "View in browser" tip for Outlook compatibility |
 | F6 | **Webhook Response Capture** | Backend endpoints that record which partner was selected (or rejection), link it to OppID, and trigger downstream update |
 | F7 | **Dataset Update** | Write accepted partner tag back to the results dataset (XLS / SharePoint list) |
 | F8 | **Audit Logging** | Append-only JSONL log: OppID, recommendation, decision, timestamp, rationale, confidence, reviewer |
 | F9 | **Batch Processing** | Process opportunities in configurable batches (default 200 rows/call); full backlog target: 1 day |
 | F10 | **Always Send — Confidence Transparency** | Every untagged opportunity is sent to the Sales Lead regardless of confidence. The email clearly shows the confidence score and rationale so the human can make an informed decision |
 | F11 | **Account History Scoring** | Look up all prior tagged deals for the same Account Name; if N deals share a partner tag, boost that partner's score proportionally (strongest signal for repeat clients) |
-| F12 | **Skip Already-Processed** | Track processed OppIDs in audit log; on each run only scan new/unprocessed opportunities — never re-send for already-treated rows |
+| F12 | **Skip Already-Processed** | Track processed OppIDs in Cosmos DB; on each run only scan new/unprocessed opportunities — never re-send for already-treated rows |
+| F13 | **THOR Agent Web Fallback** | When no confident partner match exists from internal data, the THOR Agent queries Azure OpenAI to research publicly known technology partnerships for the account. Returns a structured suggestion (partner name + confidence 15–45% + explanation) displayed as an "AI Suggestion" with amber badge |
+| F14 | **Manual Account Overrides** | Configurable YAML dictionary mapping account names to known partners (e.g. "Roche Holding AG" → "Microsoft"), injected at 95% confidence |
+| F15 | **Suggest a Partner Form** | Web form allowing Sales Leads to type in a partner name not in the recommendation list — submitted via POST, recorded in Cosmos DB and audit log |
+| F16 | **Idempotent Response Handling** | Duplicate clicks on the same opportunity return a friendly "already responded" page instead of re-processing |
+| F17 | **Blob-Backed Decision Persistence** | All accept/reject/suggest decisions are written to Azure Blob Storage in addition to Cosmos DB, surviving redeployments |
 
 ### Confidence Scoring Methodology
 
@@ -84,7 +89,7 @@ confidence = (keyword_score × 0.30)
 |---|---------|-------------|
 | S1 | **Auto-Approve** | If top partner confidence ≥ 90%, tag is written directly without human review |
 | S2 | **Reminder Email** | If no response after 3 days, resend; escalate after 7 days |
-| S3 | **Free-Text Override** | Sales Lead can type in a partner name not in the list via a form link |
+| S3 | **Free-Text Override** | ✅ **Implemented** — "Suggest a Partner" form accessible from email. Sales Lead types partner name + optional rationale, submitted via webhook |
 | S4 | **Feedback Loop** | Selected/rejected decisions feed back into scoring weights to improve future accuracy |
 | S5 | **Daily Summary Report** | Morning digest email to Sales Ops: X tagged, Y pending, Z rejected |
 
@@ -159,16 +164,29 @@ Since the system is entirely backend-driven, the **only user-facing interface** 
 
 | Button | Action | Result |
 |--------|--------|--------|
-| **Select [Partner]** | `GET /select?opp_id=X&partner=Y&token=Z` | Tag Y written to dataset, audit logged, confirmation shown |
-| **Reject All** | `GET /reject?opp_id=X&token=Z` | OppID flagged as rejected, audit logged, no tag written |
+| **Accept** | `GET /api/select?opp_id=X&partner=Y&token=Z` | Tag Y written to Cosmos DB + Blob, audit logged, confirmation page shown |
+| **Suggest different** / **Suggest a partner** | `GET /api/suggest?opp_id=X&token=Z` | Opens web form where Sales Lead types partner name + optional rationale |
+| **Skip** | `GET /api/reject?opp_id=X&token=Z` | OppID flagged as rejected, audit logged, no tag written |
+| **Form Submit** | `POST /api/suggest` (partner + opp_id + token) | Partner suggestion recorded in Cosmos DB + Blob, confirmation shown |
 
-Each partner row has its own Select button. The Sales Lead picks the one they agree with.
+Each opportunity card has its own Accept/Suggest/Skip buttons. All links use `&amp;` HTML encoding for Outlook compatibility and include HMAC-signed tokens (SHA-256) with 7-day TTL. Duplicate clicks return a friendly "already responded" page.
 
-### 4.3 Confirmation Page (after click)
+### 4.3 Email Card Types
+
+The digest email renders three distinct card types depending on match quality:
+
+| Card Type | Badge | When | Actions |
+|-----------|-------|------|---------|
+| **Internal Match** | Green/Yellow/Red `XX%` | Internal scoring found confident partner(s) | Accept · Suggest different · Skip |
+| **THOR Agent Suggestion** | Amber `AI XX%` | No internal match, but THOR Agent found a likely partner via public information research | Accept [Partner] · Suggest different · Skip |
+| **No Match** | Red `No match` | Neither internal scoring nor THOR Agent could identify a partner | Suggest a partner · Skip |
+
+### 4.4 Confirmation Page (after click)
 
 Simple HTML page served by the webhook:
-- **Select:** "Thank you. Partner tag **[Partner Name]** has been applied to opportunity **[OPP-ID]**."
-- **Reject All:** "Noted. This opportunity will remain untagged and has been flagged for manual review."
+- **Accept:** "✅ Tag Applied Successfully — Partner tag **[Partner Name]** has been applied to opportunity **[OPP-ID]**."
+- **Suggest:** Form page with partner name input + optional rationale → submit confirmation
+- **Skip:** "❌ All Recommendations Rejected — This opportunity has been flagged for manual review."
 
 ---
 
@@ -239,26 +257,35 @@ There is no multi-screen application. The user flow is linear and email-driven:
 
 | Component | Technology |
 |-----------|-----------|
-| **Orchestration** | n8n (self-hosted) or Azure Logic Apps |
-| **AI Model** | Azure OpenAI — `gpt-5.4` (batch + complex; large context window handles 200 rows/call) |
-| **Language** | Python 3.11+ |
-| **Data Source** | SharePoint Online / Azure Blob Storage (.xlsm) |
-| **Email** | Microsoft Graph API / Outlook SMTP |
-| **Webhooks** | Python (FastAPI or Flask) deployed on Azure App Service / Functions |
-| **Audit Storage** | Azure Blob (JSONL files) or Azure Table Storage |
-| **Scheduling** | n8n Schedule node (cron: `0 10 * * *`) |
-| **Config** | YAML (partners, settings) + JSON (taxonomy rules) |
+| **Orchestration** | FastAPI application on Azure App Service (B1 Linux, Switzerland North) |
+| **AI Model** | Azure OpenAI — `gpt-4o-mini` (reasoning + web fallback); upgrade path to `gpt-5.4-mini` available |
+| **Language** | Python 3.13 |
+| **Data Processing** | Polars (with calamine engine for .xlsx parsing) |
+| **Data Source** | Azure Blob Storage (`.xlsx` files in `thor-data` container) |
+| **Email** | Power Automate webhook → Outlook (via HTTP POST with HTML body) |
+| **API Framework** | FastAPI + Uvicorn |
+| **Webhooks** | FastAPI endpoints on Azure App Service (`thor-api-rcc.azurewebsites.net`) |
+| **State Store** | Azure Cosmos DB (database: `thor`, container: `pipeline-state`) |
+| **Audit Storage** | Azure Blob Storage (JSONL files) + local JSONL backup |
+| **Decision Persistence** | Azure Blob Storage (`decisions/` path) — survives redeployments |
+| **Scheduling** | n8n Schedule node (cron: `0 10 * * *`) calling `/api/run` |
+| **Config** | YAML (`settings.yaml`, `partners.yaml`) + JSON (`taxonomy.json`) |
+| **Templating** | Jinja2 (HTML email rendering) |
+| **Security** | HMAC-signed tokens (SHA-256) with 7-day TTL on all webhook links |
 
 ### 7.2 Key Libraries
 
 | Library | Purpose |
 |---------|---------|
-| `openpyxl` | Parse .xlsm files |
-| `pandas` | DataFrame processing |
-| `openai` | Azure OpenAI SDK |
+| `polars` | High-performance DataFrame processing (replaces pandas) |
+| `openai` | Azure OpenAI SDK (recommendation reasoning + web fallback) |
 | `jinja2` | Email HTML templating |
 | `pyyaml` | Config parsing |
-| `fastapi` / `flask` | Webhook endpoints |
+| `fastapi` | Webhook endpoints + API server |
+| `uvicorn` | ASGI server |
+| `azure-storage-blob` | Read source data + persist decisions from Azure Blob Storage |
+| `azure-cosmos` | State management (processed OppIDs, responses) |
+| `python-dotenv` | Environment variable loading |
 | `scikit-learn` | TF-IDF similarity scoring |
 
 ### 7.3 Infrastructure
@@ -345,7 +372,7 @@ There is no multi-screen application. The user flow is linear and email-driven:
 
 ### 11.1 Code Style
 
-- **Language:** Python 3.11+, type hints mandatory
+- **Language:** Python 3.13, type hints mandatory
 - **Formatter:** `black` (line length 100)
 - **Linter:** `ruff`
 - **Naming:** `snake_case` for functions/variables, `PascalCase` for classes

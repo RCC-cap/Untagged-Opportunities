@@ -8,7 +8,9 @@ from __future__ import annotations
 import json
 import logging
 import sys
+import uuid
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 import polars as pl
@@ -19,13 +21,14 @@ from src.approval.email_builder import (
     PartnerCandidate,
     build_digest_email,
 )
-from src.approval.token_utils import generate_token
+from src.approval.token_utils import generate_digest_token, generate_token
 from src.audit.audit_logger import append_audit_entry
 from src.engine.account_history import score_account_history
 from src.engine.keyword_extractor import extract_keywords
 from src.engine.recommender import recommend
 from src.engine.taxonomy_mapper import load_taxonomy, match_taxonomy
 from src.engine.similarity_scorer import score_similarity
+from src.engine.web_fallback import search_partner_insight, WebFallbackResult
 from src.extract.blob_reader import download_from_blob
 from src.filter.filter_untagged import filter_untagged
 from src.parse.xls_parser import parse_xlsm
@@ -35,6 +38,7 @@ from src.store.state_manager import (
     record_email_sent,
     record_recommendation,
 )
+from src.store.digest_store import save_digest_snapshot
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -190,15 +194,37 @@ def run_pipeline(
                     llm_fallbacks += 1
 
             # ── Map to email model ──────────────────────────────────────
-            euro_bkngs_raw = row_dict.get("Converted Booking", row_dict.get("Euro Bkngs", 0))
-            euro_bkngs = float(euro_bkngs_raw) if euro_bkngs_raw else 0.0
+            euro_bkngs = _extract_booking_value(row_dict)
             stage = str(row_dict.get("Stage", ""))
+
+            # ── Web fallback: research online if no confident match ─────
+            web_insight = ""
+            fallback_candidates: list[PartnerCandidate] | None = None
+            has_match = rec.candidates and rec.top_partner != "Unknown" and rec.top_confidence > 0
+            if not has_match and use_llm:
+                fallback_result = search_partner_insight(
+                    account_name=account_name,
+                    opp_name=opp_name,
+                    sector=str(row_dict.get("Sector", "")),
+                    country=str(row_dict.get("Country", "")),
+                    offer=str(row_dict.get("Offer", "")),
+                )
+                if fallback_result.partner:
+                    # Inject the web fallback as the primary candidate
+                    fallback_candidates = [
+                        PartnerCandidate(
+                            partner=fallback_result.partner,
+                            confidence=fallback_result.confidence,
+                            rationale=fallback_result.insight,
+                        )
+                    ]
+                    web_insight = fallback_result.insight
 
             opp_rec = OpportunityRecommendation(
                 opp_id=opp_id,
                 opp_name=opp_name,
                 account_name=account_name,
-                candidates=[
+                candidates=fallback_candidates if fallback_candidates else [
                     PartnerCandidate(
                         partner=c.partner,
                         confidence=c.confidence,
@@ -208,6 +234,7 @@ def run_pipeline(
                 ],
                 euro_bkngs=euro_bkngs,
                 stage=stage,
+                web_insight=web_insight,
             )
 
             # Group by Sales Lead email (test mode: override to single lead)
@@ -244,18 +271,59 @@ def run_pipeline(
 
     # ── Step 7: Build digest emails ───────────────────────────────────
     webhook_base = settings.get("webhook", {}).get("base_url", "https://thor-api-rcc.azurewebsites.net/api")
+    app_base = webhook_base[:-4] if webhook_base.endswith("/api") else webhook_base
     digests: list[dict] = []
     for lead_email, opps in recommendations_by_lead.items():
         tokens = {opp.opp_id: generate_token(opp.opp_id) for opp in opps}
+        digest_id = str(uuid.uuid4())
+        digest_token = generate_digest_token(digest_id)
+        review_url = f"{app_base}/review?digest_id={digest_id}&token={digest_token}"
+
+        digest_snapshot = {
+            "digest_id": digest_id,
+            "lead_email": lead_email,
+            "lead_name": lead_email.split("@")[0].split(".")[0].title() if "@" in lead_email else "Sales Lead",
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+            "webhook_base": webhook_base,
+            "total_opps": len(opps),
+            "total_booking": sum(opp.euro_bkngs for opp in opps),
+            "opportunities": [],
+        }
+
+        for opp in opps:
+            response = None
+            digest_snapshot["opportunities"].append({
+                "opp_id": opp.opp_id,
+                "opp_name": opp.opp_name,
+                "account_name": opp.account_name,
+                "euro_bkngs": opp.euro_bkngs,
+                "stage": opp.stage,
+                "web_insight": opp.web_insight,
+                "token": tokens[opp.opp_id],
+                "response": response,
+                "candidates": [
+                    {
+                        "partner": c.partner,
+                        "confidence": c.confidence,
+                        "rationale": c.rationale,
+                    }
+                    for c in opp.candidates
+                ],
+            })
+
+        save_digest_snapshot(digest_id, digest_snapshot)
+        logger.info(f"Saved digest snapshot {digest_id} for browser review")
+
         # Extract first name from email for greeting (e.g. "riccardo-carlo.conte@..." → "Riccardo-Carlo")
         lead_name = lead_email.split("@")[0].split(".")[0].replace("-", "-").title() if "@" in lead_email else "Sales Lead"
-        html_content = build_digest_email(opps, webhook_base, tokens, lead_name=lead_name)
+        html_content = build_digest_email(opps, webhook_base, tokens, lead_name=lead_name, browser_link=review_url)
         _save_email_preview(lead_email, html_content)
         digests.append({
             "to": lead_email,
-            "subject": f"UOA — {len(opps)} Partner Tag Recommendations for Review",
+            "subject": f"THOR Review — {len(opps)} opp{'s' if len(opps) > 1 else ''} — {digest_snapshot['created_at']}",
             "html": html_content,
             "opp_count": len(opps),
+            "review_url": review_url,
         })
         # Record email-sent status
         for opp in opps:
@@ -275,7 +343,7 @@ def run_pipeline(
         "emails_sent": len(digests),
         "llm_calls": llm_calls,
         "llm_fallbacks": llm_fallbacks,
-        "digests": digests if dry_run else [{"to": d["to"], "opp_count": d["opp_count"]} for d in digests],
+        "digests": digests if dry_run else [{"to": d["to"], "opp_count": d["opp_count"], "review_url": d["review_url"]} for d in digests],
     }
 
 
@@ -341,6 +409,38 @@ def _score_offer_match(row: dict, taxonomy: dict) -> dict[str, float]:
             scores[partner] = min(match_score, 100.0)
 
     return scores
+
+
+def _safe_float(value: object) -> float:
+    """Convert spreadsheet-style numeric values to float safely."""
+    if value is None:
+        return 0.0
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    text = str(value).strip()
+    if not text:
+        return 0.0
+
+    text = text.replace("€", "").replace(",", "").replace("'", "")
+    try:
+        return float(text)
+    except ValueError:
+        return 0.0
+
+
+def _extract_booking_value(row: dict) -> float:
+    """Pick the best available booking value from the opportunity row."""
+    candidate_fields = [
+        "Converted Booking",
+        "Euro Bkngs",
+        "Weighted Euro Booking",
+        "Contribution",
+    ]
+
+    values = [_safe_float(row.get(field)) for field in candidate_fields]
+    non_zero = [value for value in values if value > 0]
+    return non_zero[0] if non_zero else 0.0
 
 
 def _send_digest_emails(

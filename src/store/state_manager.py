@@ -55,9 +55,10 @@ def record_response(
     decision: str,
     selected_partner: str | None = None,
     responded_by: str | None = None,
+    comment: str | None = None,
 ) -> None:
-    """Record a Sales Lead's response (select or reject)."""
-    upsert_document({
+    """Record a Sales Lead's response (select, suggest, or comment)."""
+    doc = {
         "id": f"resp-{opp_id}",
         "opp_id": opp_id,
         "type": "response",
@@ -65,7 +66,10 @@ def record_response(
         "decision": decision,
         "selected_partner": selected_partner,
         "responded_by": responded_by,
-    })
+    }
+    if comment:
+        doc["comment"] = comment
+    upsert_document(doc)
 
 
 # ── Query Operations ──────────────────────────────────────────────────

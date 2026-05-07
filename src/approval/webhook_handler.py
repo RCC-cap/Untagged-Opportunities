@@ -41,7 +41,7 @@ def handle_select(params: dict) -> tuple[str, int]:
     if not opp_id or not partner or not token:
         return _error_page("Missing required parameters."), 400
 
-    if not verify_token(opp_id, partner, token):
+    if not verify_token(opp_id, "", token):
         return _error_page("Invalid or expired link. Please contact your administrator."), 403
 
     # Persist to Cosmos DB

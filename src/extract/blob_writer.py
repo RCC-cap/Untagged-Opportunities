@@ -74,14 +74,16 @@ def record_decision_to_blob(
     decision: str,
     partner: str | None = None,
     suggested_by: str | None = None,
+    comment: str | None = None,
 ) -> bool:
     """Write a partner decision to Blob Storage (persistent history).
 
     Args:
         opp_id: Opportunity ID.
-        decision: "selected" | "rejected" | "suggested".
+        decision: "selected" | "rejected" | "suggested" | "commented".
         partner: Chosen or suggested partner name.
         suggested_by: Email of who suggested (for suggest flow).
+        comment: Optional comment from Sales Lead.
 
     Returns:
         True if written successfully.
@@ -93,6 +95,8 @@ def record_decision_to_blob(
         "partner": partner,
         "suggested_by": suggested_by,
     }
+    if comment:
+        entry["comment"] = comment
     line = json.dumps(entry, ensure_ascii=False)
     success = append_to_blob(RESULTS_BLOB, line)
     if success:

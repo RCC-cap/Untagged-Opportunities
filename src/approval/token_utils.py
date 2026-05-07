@@ -37,6 +37,15 @@ def generate_token(opp_id: str, partner: str = "", ttl_hours: int = 168) -> str:
     return f"{expiry}.{signature}"
 
 
+def generate_digest_token(digest_id: str, ttl_hours: int = 168) -> str:
+    """Generate an HMAC-signed token for a browser review digest."""
+    secret = _get_secret()
+    expiry = int(time.time()) + (ttl_hours * 3600)
+    message = f"digest:{digest_id}:{expiry}".encode()
+    signature = hmac.new(secret, message, hashlib.sha256).hexdigest()
+    return f"{expiry}.{signature}"
+
+
 def verify_token(opp_id: str, partner: str, token: str) -> bool:
     """Verify an HMAC token from a webhook callback.
 
@@ -68,6 +77,26 @@ def verify_token(opp_id: str, partner: str, token: str) -> bool:
         expected_sig = hmac.new(secret, message, hashlib.sha256).hexdigest()
 
         # Constant-time comparison
+        return hmac.compare_digest(provided_sig, expected_sig)
+    except (ValueError, TypeError):
+        return False
+
+
+def verify_digest_token(digest_id: str, token: str) -> bool:
+    """Verify a browser review digest token."""
+    try:
+        secret = _get_secret()
+        parts = token.split(".", 1)
+        if len(parts) != 2:
+            return False
+
+        expiry_str, provided_sig = parts
+        expiry = int(expiry_str)
+        if time.time() > expiry:
+            return False
+
+        message = f"digest:{digest_id}:{expiry}".encode()
+        expected_sig = hmac.new(secret, message, hashlib.sha256).hexdigest()
         return hmac.compare_digest(provided_sig, expected_sig)
     except (ValueError, TypeError):
         return False
