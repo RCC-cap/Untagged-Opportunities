@@ -238,93 +238,181 @@ def build_approval_email(
 # ──────────────────────────────────────────────────────────────────────
 
 DIGEST_TEMPLATE = """\
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="UTF-8">
-    <style>
-        body { margin: 0; padding: 0; background-color: #f4f4f4; }
-        table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    </style>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Partner Review Required</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4;">
+<body style="margin: 0; padding: 0; background-color: #e8f0fa; font-family: Arial, Helvetica, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
     <center>
-        <table border="0" cellpadding="0" cellspacing="0" width="600" bgcolor="#ffffff" style="margin: 20px auto; border: 1px solid #dddddd;">
-
-            <!-- HEADER -->
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #e8f0fa;">
             <tr>
-                <td bgcolor="#0070ad" style="padding: 40px;">
-                    <div style="color: #ffffff; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; margin-bottom: 20px;">
-                        Capgemini
-                    </div>
-                    <div style="color: #ffffff; font-family: Arial, sans-serif; font-size: 14px; letter-spacing: 1px; margin-bottom: 10px; opacity: 0.8;">
-                        THOR PARTNER TAGGING AGENT
-                    </div>
-                    <h1 style="color: #ffffff; font-family: Arial, sans-serif; font-size: 28px; line-height: 1.2; margin: 0;">
-                        Review partner recommendations in your browser workspace
-                    </h1>
-                </td>
-            </tr>
+                <td align="center" style="padding: 30px 0;">
 
-            <!-- STATUS BAR -->
-            <tr>
-                <td bgcolor="#004a7c" style="padding: 15px 40px; font-family: Arial, sans-serif; color: #ffffff; font-size: 13px;">
-                    <strong>{{ lead_name }}</strong> &nbsp;|&nbsp; {{ total_opps_word }} opportunit{{ 'y' if total_opps == 1 else 'ies' }} pending{% if total_booking > 0 %} &nbsp;|&nbsp; <span style="color: #12abdb;">&euro;{{ "{:,.0f}".format(total_booking) }} pipeline value</span>{% endif %}
-                </td>
-            </tr>
+                    <!-- EMAIL CONTAINER -->
+                    <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 12px; overflow: hidden;">
 
-            <!-- BODY CONTENT -->
-            <tr>
-                <td style="padding: 40px; font-family: Arial, sans-serif; color: #444444; font-size: 15px; line-height: 1.6;">
-                    Validate partner-tag recommendations generated for opportunities in your scope. Your expertise helps refine our predictive models.
-
-                    <!-- INFO BOX 1 -->
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#f0f7ff" style="margin-top: 30px; border-left: 4px solid #12abdb;">
+                        <!-- TOP BRAND BAR -->
                         <tr>
-                            <td style="padding: 20px;">
-                                <div style="color: #0070ad; font-weight: bold; font-size: 16px; margin-bottom: 5px;">Why your input matters</div>
-                                <div style="font-size: 14px; color: #666666;">Adjusting suggestions ensures high-quality traceability and better future matches.</div>
+                            <td bgcolor="#0070ad" style="padding: 18px 36px;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td style="color: #ffffff; font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; line-height: 1;">Capgemini</td>
+                                        <td align="right" style="color: rgba(255,255,255,0.7); font-family: Arial, sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">From Agent</td>
+                                    </tr>
+                                </table>
                             </td>
                         </tr>
-                    </table>
 
-                    <!-- BUTTON -->
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <!-- HERO SECTION -->
                         <tr>
-                            <td align="center" style="padding: 35px 0;">
-                                <table border="0" cellpadding="0" cellspacing="0">
+                            <td bgcolor="#004a7c" style="padding: 28px 36px 32px 36px;">
+                                <div style="color: rgba(255,255,255,0.6); font-family: Arial, sans-serif; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px;">Action Required</div>
+                                <div style="color: #ffffff; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; line-height: 1.3;">Partner recommendations are ready for your review</div>
+                            </td>
+                        </tr>
+
+                        <!-- KPI CARDS SECTION -->
+                        <tr>
+                            <td style="padding: 28px 28px 0 28px; background-color: #f4f8fc;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                     <tr>
-                                        <td align="center" bgcolor="#0070ad" style="border-radius: 2px;">
-                                            <a href="{{ browser_link }}" target="_blank" style="display: inline-block; padding: 16px 36px; font-family: Arial, sans-serif; font-size: 16px; color: #ffffff; font-weight: bold; text-decoration: none;">
-                                                Open Browser Review Workspace
-                                            </a>
+                                        <!-- Opportunities Card -->
+                                        <td width="50%" valign="top" style="padding: 0 6px 0 0;">
+                                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; border: 1px solid #e0e8f0; border-radius: 10px; overflow: hidden;">
+                                                <tr>
+                                                    <td align="center" style="padding: 24px 12px 8px 12px;">
+                                                        <div style="color: #0070ad; font-family: Arial, sans-serif; font-size: 40px; font-weight: bold; line-height: 1;">{{ total_opps }}</div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="padding: 4px 12px 2px 12px;">
+                                                        <div style="color: #0070ad; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px;">Opportunities</div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="padding: 2px 12px 12px 12px;">
+                                                        <div style="color: #888888; font-family: Arial, sans-serif; font-size: 11px; font-style: italic;">awaiting partner tag</div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="padding: 0 12px 18px 12px;">
+                                                        <table border="0" cellpadding="0" cellspacing="0">
+                                                            <tr>
+                                                                <td align="center" bgcolor="#0070ad" style="border-radius: 6px; padding: 6px 10px;">
+                                                                    <span style="color: #ffffff; font-size: 16px;">&#129309;</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <!-- Pipeline Value Card -->
+                                        <td width="50%" valign="top" style="padding: 0 0 0 6px;">
+                                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff; border: 1px solid #e0e8f0; border-radius: 10px; overflow: hidden;">
+                                                <tr>
+                                                    <td align="center" style="padding: 24px 12px 8px 12px;">
+                                                        <div style="color: #0070ad; font-family: Arial, sans-serif; font-size: 28px; font-weight: bold; line-height: 1;">&euro;{{ "{:,.0f}".format(total_booking) }}</div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="padding: 4px 12px 2px 12px;">
+                                                        <div style="color: #0070ad; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px;">Potential Value</div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="padding: 2px 12px 12px 12px;">
+                                                        <div style="color: #888888; font-family: Arial, sans-serif; font-size: 11px; font-style: italic;">pending validation</div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td align="center" style="padding: 0 12px 18px 12px;">
+                                                        <table border="0" cellpadding="0" cellspacing="0">
+                                                            <tr>
+                                                                <td align="center" bgcolor="#f0ad4e" style="border-radius: 6px; padding: 6px 10px;">
+                                                                    <span style="color: #ffffff; font-size: 16px;">&#128176;</span>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
                                         </td>
                                     </tr>
                                 </table>
                             </td>
                         </tr>
-                    </table>
 
-                    <!-- INFO BOX 2 -->
-                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 1px dashed #cccccc; border-left: 4px solid #0070ad;">
+                        <!-- BODY TEXT -->
                         <tr>
-                            <td style="padding: 20px;">
-                                <div style="color: #0070ad; font-weight: bold; font-size: 16px; margin-bottom: 5px;">Better in Browser</div>
-                                <div style="font-size: 14px; color: #666666;">See the full workspace with cleaner rendering and direct action buttons.</div>
+                            <td style="padding: 30px 36px 0 36px; background-color: #ffffff;">
+                                <div style="color: #333333; font-family: Arial, sans-serif; font-size: 15px; line-height: 1.5; margin-bottom: 16px;">Dear {{ lead_name }},</div>
+                                <div style="color: #444444; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.7; margin-bottom: 14px;">
+                                    <strong style="color: #222222;">{{ total_opps_word | capitalize }} opportunities</strong> in your scope are currently untagged. Our AI model has generated partner recommendations&mdash;<strong style="color: #222222;">your validation</strong> is needed to ensure accurate attribution.
+                                </div>
+                                <div style="color: #666666; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6;">
+                                    Review, confirm or adjust each suggestion in your browser workspace.
+                                </div>
                             </td>
                         </tr>
+
+                        <!-- CTA BUTTON -->
+                        <tr>
+                            <td style="padding: 28px 36px 36px 36px; background-color: #ffffff;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td align="center">
+                                            <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate;">
+                                                <tr>
+                                                    <td align="center" bgcolor="#0070ad" style="border-radius: 8px;">
+                                                        <a href="{{ browser_link }}" target="_blank" style="display: inline-block; padding: 16px 44px; font-family: Arial, sans-serif; font-size: 16px; color: #ffffff; font-weight: bold; text-decoration: none; border: 1px solid #0070ad; letter-spacing: 0.3px;">Review Recommendations &rarr;</a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- DIVIDER -->
+                        <tr>
+                            <td style="padding: 0 36px; background-color: #ffffff;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr><td style="border-top: 1px solid #eeeeee; font-size: 1px; line-height: 1px;">&nbsp;</td></tr>
+                                </table>
+                            </td>
+                        </tr>
+
+                        <!-- SIGN-OFF -->
+                        <tr>
+                            <td style="padding: 20px 36px 28px 36px; background-color: #ffffff;">
+                                <div style="color: #444444; font-family: Arial, sans-serif; font-size: 13px; line-height: 1.6;">
+                                    Kind regards,<br />
+                                    <strong style="color: #0070ad;">Capgemini Alliance Team</strong>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- FOOTER -->
+                        <tr>
+                            <td bgcolor="#f4f8fc" style="padding: 18px 36px; border-top: 1px solid #e8eff5;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td style="color: #999999; font-family: Arial, sans-serif; font-size: 11px;">&copy; 2026 Capgemini</td>
+                                        <td align="right" style="color: #0070ad; font-family: Arial, sans-serif; font-size: 11px; font-style: italic;">Get the future you want</td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+
                     </table>
+                    <!-- /EMAIL CONTAINER -->
+
                 </td>
             </tr>
-
-            <!-- FOOTER -->
-            <tr>
-                <td align="center" bgcolor="#f4f4f4" style="padding: 30px; font-family: Arial, sans-serif; color: #999999; font-size: 12px;">
-                    &copy; 2026 Capgemini. All rights reserved.<br>
-                    <strong style="color: #0070ad; display: inline-block; margin-top: 10px;">Get the future you want</strong>
-                </td>
-            </tr>
-
         </table>
     </center>
 </body>

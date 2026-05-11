@@ -11,11 +11,11 @@
           ]
         }
       },
-      "id": "06901ee8-fafb-4a0b-af08-6d2312d45ecc",
+      "id": "7124faf8-9bc1-465c-afa5-89d98468c17b",
       "name": "Daily 10:00 AM",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [-576, -16],
+      "position": [-640, -16],
       "notes": "Runs daily at 10:00 AM Europe/Rome. Triggers the THOR partner tagging pipeline."
     },
     {
@@ -24,17 +24,16 @@
         "url": "https://thor-api-rcc.azurewebsites.net/api/run",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\"use_llm\": true, \"dry_run\": false}",
+        "jsonBody": "{\"use_llm\": false, \"dry_run\": false}",
         "options": {
-          "timeout": 3600000,
-          "fullResponse": true
+          "timeout": 3600000
         }
       },
-      "id": "2e973851-f3b7-472f-8e4b-ccdc226823a2",
+      "id": "1a674440-ec0d-478c-9a7e-2ee29b244569",
       "name": "Run Pipeline",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [-400, -16],
+      "position": [-464, -16],
       "onError": "continueRegularOutput",
       "notes": "POSTs to the THOR FastAPI /api/run endpoint. Timeout: 1 hour."
     },
@@ -51,51 +50,53 @@
         },
         "options": {}
       },
-      "id": "856c6ddc-554d-4501-85bc-fa8ccdb1f062",
+      "id": "52e7fdb8-f113-4c40-a20e-7b1074e2b293",
       "name": "Success?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [-240, -16]
+      "position": [-304, -16]
     },
     {
       "parameters": {
         "jsCode": "const body = $input.first().json.body;\ntry {\n  const result = typeof body === 'string' ? JSON.parse(body) : body;\n  return [{ json: result }];\n} catch (e) {\n  return [{ json: { error: 'Failed to parse API response', raw: JSON.stringify(body) } }];\n}"
       },
-      "id": "39951df0-41dd-44fe-a329-da2b456b6489",
+      "id": "db1f31ce-cbcb-475c-bddb-fc5ab7c8e447",
       "name": "Parse JSON Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-80, -80],
+      "position": [-112, -128],
       "notes": "Extracts the pipeline result from the HTTP response body."
     },
     {
       "parameters": {
         "jsCode": "const data = $input.first().json;\nconst digests = data.digests || [];\nreturn digests.map(d => ({ json: d }));"
       },
-      "id": "b4d2e1f0-5a6c-4b3d-9e8f-1a2b3c4d5e6f",
+      "id": "b1042c0d-4933-4dd7-95b4-9fdcdae0bbed",
       "name": "Split Digests",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [80, -80],
+      "position": [128, 0],
       "notes": "Splits the digests array into individual items — one per Sales Lead email."
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://default76a2ae5a9f004f6b95ed5d33d77c4d.61.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5f62b45d4f03437dbf536a9250941547/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=V0HHXpj6ofQVNjrniLZ76YPP8U7ARdiM1XrjcUIt1Pk",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ recipient: $json.to, subject: $json.subject, Body: $json.html }) }}",
-        "options": {
-          "timeout": 30000
+        "toRecipients": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "bodyContent": "={{ $json.html }}",
+        "additionalFields": {}
+      },
+      "id": "07509f74-6fc0-43d7-a1f0-b8e74962eb3b",
+      "name": "Send Digest Email",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [352, 0],
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "NP3s0P2eXvxglbfb",
+          "name": "Microsoft Outlook account"
         }
       },
-      "id": "d7e8f9a0-1b2c-4d3e-5f6a-7b8c9d0e1f2a",
-      "name": "Send Digest Email",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [240, -80],
-      "notes": "POSTs digest email payload to Power Automate webhook which sends via Office 365 Outlook."
+      "notes": "Sends the branded HTML digest email to each Sales Lead."
     },
     {
       "parameters": {
@@ -108,30 +109,32 @@
           "timeout": 30000
         }
       },
-      "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+      "id": "f74912f8-b4f0-482f-a298-08ae6f6d1fdf",
       "name": "POST to Teams Webhook",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [80, -200],
+      "position": [112, -272],
       "notes": "POSTs pipeline summary to Power Automate webhook (Teams notification)."
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://default76a2ae5a9f004f6b95ed5d33d77c4d.61.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/5f62b45d4f03437dbf536a9250941547/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=V0HHXpj6ofQVNjrniLZ76YPP8U7ARdiM1XrjcUIt1Pk",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ recipient: 'riccardo-carlo.conte@capgemini.com', subject: '⚠️ THOR Pipeline FAILED — ' + $now.format('yyyy-MM-dd'), Body: '<h2 style=\"color:#d83b01\">Pipeline Failure</h2><p>The THOR partner tagging pipeline failed on ' + $now.format('yyyy-MM-dd HH:mm') + '.</p><h3>Error Output</h3><pre style=\"background:#f5f5f5;padding:12px;border-radius:4px;overflow-x:auto\">' + ($json.body?.error || $json.body || 'No output captured') + '</pre><p>HTTP status: ' + $json.statusCode + '</p><p style=\"color:#666\">Check the application logs for details.</p>' }) }}",
-        "options": {
-          "timeout": 30000
+        "toRecipients": "riccardo-carlo.conte@capgemini.com",
+        "subject": "=⚠️ THOR Pipeline FAILED — {{ $now.format('yyyy-MM-dd') }}",
+        "bodyContent": "=<h2 style='color:#d83b01'>Pipeline Failure</h2><p>The THOR partner tagging pipeline failed on {{ $now.format('yyyy-MM-dd HH:mm') }}.</p><h3>Error Output</h3><pre style='background:#f5f5f5;padding:12px;border-radius:4px;overflow-x:auto'>{{ $json.body?.error || $json.body || 'No output captured' }}</pre><p>HTTP status: {{ $json.statusCode }}</p><p style='color:#666'>Check the application logs for details.</p>",
+        "additionalFields": {}
+      },
+      "id": "dd8a4b9b-340d-44a5-8298-cd1d2b957a66",
+      "name": "Send Error Alert",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [-128, 160],
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "NP3s0P2eXvxglbfb",
+          "name": "Microsoft Outlook account"
         }
       },
-      "id": "6e67ca71-87c1-4843-aab8-a6182e503855",
-      "name": "Send Error Alert",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [-80, 80],
-      "notes": "POSTs error alert to Power Automate webhook which sends via Office 365 Outlook."
+      "notes": "Alerts Admin when the pipeline fails."
     }
   ],
   "connections": {
@@ -227,6 +230,6 @@
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "07aae0f3e07496de1ab4cfe9aab223dc31c0162f396e07bc0b35acf58779e962",
-    "description": "THOR Agentic Partner Tagging — Daily pipeline via Outlook (Teams webhook auth)."
+    "description": "THOR Agentic Partner Tagging — Daily pipeline via n8n Outlook node (direct Graph API)."
   }
 }

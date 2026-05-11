@@ -332,9 +332,8 @@ def run_pipeline(
     if dry_run:
         logger.info(f"DRY RUN — saved {len(digests)} email preview(s) to data/email_previews/")
     else:
-        logger.info(f"Sending {len(digests)} digest email(s) via Power Automate webhook...")
-        sent_ok = _send_via_power_automate(digests)
-        logger.info(f"Emails sent successfully: {sent_ok}/{len(digests)}")
+        # Email sending is handled by n8n Outlook node — backend only returns digests
+        logger.info(f"Pipeline complete — {len(digests)} digest(s) ready for n8n to send.")
 
     return {
         "processed": processed_count,
@@ -343,7 +342,7 @@ def run_pipeline(
         "emails_sent": len(digests),
         "llm_calls": llm_calls,
         "llm_fallbacks": llm_fallbacks,
-        "digests": digests if dry_run else [{"to": d["to"], "opp_count": d["opp_count"], "review_url": d["review_url"]} for d in digests],
+        "digests": digests,
     }
 
 
